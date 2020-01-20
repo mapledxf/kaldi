@@ -189,6 +189,7 @@ if [ $stage -le 11 ]; then
     --cleanup.remove-egs $remove_egs \
     --feat-dir data/${train_set}_hires_online \
     --tree-dir $treedir \
+    --use-gpu wait \
     --lat-dir exp/tri5a_sp_lats \
     --dir $dir  || exit 1;
 fi
