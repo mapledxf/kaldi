@@ -20,12 +20,12 @@
 
 
 # corpus directory and download URL
-data=/export/a05/xna/data
+data=/home/data/xfding
 data_url=www.openslr.org/resources/62
 
 # Obtain the database
 #[ -d $data ] || mkdir -p $data || exit 1;
-local/download_and_untar.sh $data $data_url aidatatang_200zh || exit 1;
+#local/download_and_untar.sh $data $data_url aidatatang_200zh || exit 1;
 
 # Data Preparation: generate text, wav.scp, utt2spk, spk2utt
 local/data_prep.sh $data/aidatatang_200zh/corpus $data/aidatatang_200zh/transcript || exit 1;

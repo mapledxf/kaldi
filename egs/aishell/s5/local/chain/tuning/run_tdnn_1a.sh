@@ -18,8 +18,8 @@ initial_effective_lrate=0.001
 final_effective_lrate=0.0001
 max_param_change=2.0
 final_layer_normalize_target=0.5
-num_jobs_initial=2
-num_jobs_final=12
+num_jobs_initial=1
+num_jobs_final=1
 minibatch_size=128
 frames_per_eg=150,110,90
 remove_egs=true
@@ -151,6 +151,7 @@ if [ $stage -le 11 ]; then
     --egs.chunk-width $frames_per_eg \
     --trainer.num-chunk-per-minibatch $minibatch_size \
     --trainer.frames-per-iter 1500000 \
+    --use-gpu wait \
     --trainer.num-epochs $num_epochs \
     --trainer.optimization.num-jobs-initial $num_jobs_initial \
     --trainer.optimization.num-jobs-final $num_jobs_final \
