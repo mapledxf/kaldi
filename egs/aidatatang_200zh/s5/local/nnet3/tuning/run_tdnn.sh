@@ -32,8 +32,8 @@ common_egs_dir=
 initial_effective_lrate=0.0015
 final_effective_lrate=0.00015
 num_epochs=4
-num_jobs_initial=2
-num_jobs_final=12
+num_jobs_initial=1
+num_jobs_final=1
 remove_egs=true
 
 # feature options
@@ -111,6 +111,7 @@ if [ $stage -le 8 ]; then
     --feat-dir=data/${train_set}_hires_online \
     --ali-dir $ali_dir \
     --lang data/lang \
+    --use-gpu wait \
     --reporting.email="$reporting_email" \
     --dir=$dir  || exit 1;
 fi

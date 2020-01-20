@@ -168,6 +168,7 @@ if [ $stage -le 11 ]; then
     --trainer.max-param-change $max_param_change \
     --cleanup.remove-egs $remove_egs \
     --feat-dir data/${train_set}_hires \
+    --use-gpu wait \
     --tree-dir $treedir \
     --lat-dir exp/tri5a_sp_lats \
     --dir $dir  || exit 1;
