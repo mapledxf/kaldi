@@ -12,8 +12,6 @@ out_dir=$1
 [ -f ./path.sh ] && . ./path.sh;
 . ./utils/parse_options.sh
 
-test_nj=$(wc -l $out_dir/data/test/spk2utt | awk '{print $1}' || exit 1;)
-
 # Now make MFCC features.
 if [ $stage -le 1 ]; then
   # mfccdir should be some place with a largish disk where you
@@ -47,7 +45,7 @@ if [ $stage -le 2 ]; then
     $out_dir/data/lang_test \
     $out_dir/exp/mono \
     $out_dir/exp/mono/graph || exit 1;
-  steps/decode.sh --cmd "$decode_cmd" --config conf/decode.conf --nj ${test_nj} \
+  steps/decode.sh --cmd "$decode_cmd" --config conf/decode.conf --nj $nj \
     $out_dir/exp/mono/graph \
     $out_dir/data/test \
     $out_dir/exp/mono/decode_test
@@ -65,7 +63,7 @@ if [ $stage -le 3 ]; then
   echo "$0: stage $stage train tri1"
   # training
   steps/train_deltas.sh --cmd "$train_cmd" \
-   4000 32000 \
+   2500 20000 \
    $out_dir/data/train \
    $out_dir/data/lang \
    $out_dir/exp/mono_ali \
@@ -77,7 +75,7 @@ if [ $stage -le 3 ]; then
     $out_dir/data/lang_test \
     $out_dir/exp/tri1 \
     $out_dir/exp/tri1/graph || exit 1;
-  steps/decode.sh --cmd "$decode_cmd" --config conf/decode.conf --nj ${test_nj} \
+  steps/decode.sh --cmd "$decode_cmd" --config conf/decode.conf --nj $nj \
     $out_dir/exp/tri1/graph \
     $out_dir/data/test \
     $out_dir/exp/tri1/decode_test
@@ -95,7 +93,7 @@ if [ $stage -le 4 ]; then
   echo "$0: stage $stage train tri2"
   # training
   steps/train_deltas.sh --cmd "$train_cmd" \
-   7000 56000 \
+   2500 20000 \
    $out_dir/data/train \
    $out_dir/data/lang \
    $out_dir/exp/tri1_ali \
@@ -107,7 +105,7 @@ if [ $stage -le 4 ]; then
     $out_dir/data/lang_test \
     $out_dir/exp/tri2 \
     $out_dir/exp/tri2/graph || exit 1;
-  steps/decode.sh --cmd "$decode_cmd" --config conf/decode.conf --nj ${test_nj} \
+  steps/decode.sh --cmd "$decode_cmd" --config conf/decode.conf --nj $nj \
     $out_dir/exp/tri2/graph \
     $out_dir/data/test \
     $out_dir/exp/tri2/decode_test
@@ -125,28 +123,21 @@ if [ $stage -le 5 ]; then
   echo "$0: stage $stage train tri3 (lda+mllt)"
   # training [LDA+MLLT]
   steps/train_lda_mllt.sh --cmd "$train_cmd" \
-   10000 80000 \
-   $out_dir/data/train \
-   $out_dir/data/lang \
-   $out_dir/exp/tri2_ali \
-   $out_dir/exp/tri3 || exit 1;
+    2500 20000 \
+    $out_dir/data/train \
+    $out_dir/data/lang \
+    $out_dir/exp/tri2_ali \
+    $out_dir/exp/tri3 || exit 1;
 
   # decoding
   utils/mkgraph.sh \
     $out_dir/data/lang_test \
     $out_dir/exp/tri3 \
     $out_dir/exp/tri3/graph || exit 1;
-  steps/decode.sh --cmd "$decode_cmd" --config conf/decode.conf --nj ${test_nj} \
+  steps/decode.sh --cmd "$decode_cmd" --config conf/decode.conf --nj $nj \
     $out_dir/exp/tri3/graph \
     $out_dir/data/test \
     $out_dir/exp/tri3/decode_test
-
-  # alignment
-#  steps/align_si.sh --cmd "$train_cmd" --nj $nj \
-#    $out_dir/data/train \
-#    $out_dir/data/lang \
-#    $out_dir/exp/tri3 \
-#    $out_dir/exp/tri3_ali || exit 1;
 
   # alignment with fMLLR
   echo "$0: stage $stage align tri3 with fmllr"
@@ -173,7 +164,7 @@ if [ $stage -le 6 ]; then
     $out_dir/data/lang_test \
     $out_dir/exp/tri4 \
     $out_dir/exp/tri4/graph || exit 1;
-  steps/decode.sh --cmd "$decode_cmd" --config conf/decode.conf --nj ${test_nj} \
+  steps/decode_fmllr.sh --cmd "$decode_cmd" --nj $nj \
     $out_dir/exp/tri4/graph \
     $out_dir/data/test \
     $out_dir/exp/tri4/decode_test
@@ -203,7 +194,7 @@ if [ $stage -le 7 ]; then
     $out_dir/data/lang_test \
     $out_dir/exp/tri5 \
     $out_dir/exp/tri5/graph || exit 1;
-  steps/decode.sh --cmd "$decode_cmd" --config conf/decode.conf --nj ${test_nj} \
+  steps/decode_fmllr.sh --cmd "$decode_cmd" --nj $nj \
     $out_dir/exp/tri5/graph \
     $out_dir/data/test \
     $out_dir/exp/tri5/decode_test

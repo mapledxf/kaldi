@@ -51,7 +51,7 @@ outdir=$1
 
 dir=$outdir/exp/chain/tdnn_vwm${affix:+_$affix}_sp
 train_set=train_sp
-ali_dir=$outdir/exp/tri5a_ali
+ali_dir=$outdir/exp/tri5_sp_ali
 treedir=$outdir/exp/chain/tri6_7d_tree_sp
 lang=$outdir/data/lang_chain
 
@@ -67,9 +67,9 @@ if [ $stage -le 7 ]; then
   steps/align_fmllr_lats.sh --nj $nj --cmd "$train_cmd" \
     $outdir/data/$train_set \
     $outdir/data/lang \
-    $outdir/exp/tri5a \
-    $outdir/exp/tri5a_sp_lats
-  rm $outdir/exp/tri5a_sp_lats/fsts.*.gz # save space
+    $outdir/exp/tri5 \
+    $outdir/exp/tri5_sp_lats
+  rm $outdir/exp/tri5_sp_lats/fsts.*.gz # save space
 fi
 
 if [ $stage -le 8 ]; then
@@ -173,7 +173,7 @@ if [ $stage -le 11 ]; then
     --use-gpu wait \
     --feat-dir $outdir/data/${train_set}_hires_online \
     --tree-dir $treedir \
-    --lat-dir $outdir/exp/tri5a_sp_lats \
+    --lat-dir $outdir/exp/tri5_sp_lats \
     --dir $dir  || exit 1;
 fi
 
