@@ -1,10 +1,10 @@
 #!/bin/bash
 
-data=/home/data/xfding/asr-noisy-48h
-trn_set=$data/wav
-trans=$data/script/trans.txt
-tst_set=$data/wav
-out_dir=/home/data/xfding/asr-train
+data=/home/data/xfding/train_dataset/asr
+trn_set=$data/train
+trans=$data/trans.txt
+tst_set=$data/test
+out_dir=/home/data/xfding/train_result/asr/notebook
 
 nj=20
 stage=0
@@ -16,7 +16,7 @@ gmm_stage=1
 
 # prepare trn/dev/tst data, lexicon, lang etc
 if [ $stage -le 1 ]; then
-  local/prepare_all.sh ${trn_set} ${trans} ${out_dir} || exit 1;
+  local/prepare_all.sh ${trn_set} ${tst_set} ${trans} ${out_dir} || exit 1;
 fi
 
 # GMM
