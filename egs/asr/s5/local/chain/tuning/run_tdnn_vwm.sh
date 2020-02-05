@@ -55,12 +55,15 @@ ali_dir=$outdir/exp/tri5_sp_ali
 treedir=$outdir/exp/chain/tri6_7d_tree_sp
 lang=$outdir/data/lang_chain
 
+if [ $stage -le 6 ]; then
+  echo 'Start generate ivector'
+  local/nnet3/run_ivector_common.sh --stage $stage --online true $outdir || exit 1;
+fi
 
 # if we are using the speed-perturbed data we need to generate
 # alignments for it.
-local/nnet3/run_ivector_common.sh --stage $stage --online true $outdir || exit 1;
-
 if [ $stage -le 7 ]; then
+  echo 'Start generate sp lats ali'
   # Get the alignments as lattices (gives the LF-MMI training more freedom).
   # use the same num-jobs as the alignments
   nj=$(cat $ali_dir/num_jobs) || exit 1;
@@ -68,11 +71,12 @@ if [ $stage -le 7 ]; then
     $outdir/data/$train_set \
     $outdir/data/lang \
     $outdir/exp/tri5 \
-    $outdir/exp/tri5_sp_lats
+    $outdir/exp/tri5_sp_lats || exit 1;
   rm $outdir/exp/tri5_sp_lats/fsts.*.gz # save space
 fi
 
 if [ $stage -le 8 ]; then
+  echo 'Start generate topo'
   # Create a version of the lang/ directory that has one state per phone in the
   # topo file. [note, it really has two states.. the first one is only repeated
   # once, the second one has zero or more repeats.]
@@ -86,6 +90,7 @@ if [ $stage -le 8 ]; then
 fi
 
 if [ $stage -le 9 ]; then
+  echo 'Start generate tree'
   # Build a tree using our new topology. This is the critically different
   # step compared with other recipes.
   steps/nnet3/chain/build_tree.sh --frame-subsampling-factor 3 \
@@ -177,21 +182,17 @@ if [ $stage -le 11 ]; then
     --dir $dir  || exit 1;
 fi
 
+graph_dir=$dir/graph
 if [ $stage -le 12 ]; then
   # Note: it might appear that this $lang directory is mismatched, and it is as
   # far as the 'topo' is concerned, but this script doesn't read the 'topo' from
   # the lang directory.
-  utils/mkgraph.sh --self-loop-scale 1.0 $outdir/data/lang_test $dir $dir/graph
+  utils/mkgraph.sh --self-loop-scale 1.0 \
+	  $outdir/data/lang_test \
+	  $dir \
+	  $graph_dir
 fi
 
-if [ $stage -le 14 ]; then
-  steps/online/nnet3/prepare_online_decoding.sh --mfcc-config conf/mfcc_hires.conf \
-    --add-pitch true \
-    $lang \
-    $outdir/exp/nnet3/extractor "$dir" ${dir}_online || exit 1;
-fi
-
-graph_dir=$dir/graph
 if [ $stage -le 13 ]; then
 	steps/nnet3/decode.sh --acwt 1.0 --post-decode-acwt 10.0 \
 		--nj 10 --cmd "$decode_cmd" \
@@ -205,13 +206,15 @@ if [ $stage -le 14 ]; then
 		--add-pitch true \
 		$lang \
 		$outdir/exp/nnet3/extractor "$dir" ${dir}_online || exit 1;
+	cp $graph_dir/HCLG.fst ${dir}_online/HCLG.fst
+	cp $graph_dir/words.txt ${dir}_online/words.txt
 fi
 
 dir=${dir}_online
 if [ $stage -le 15 ]; then
 	steps/online/nnet3/decode.sh --acwt 1.0 --post-decode-acwt 10.0 \
 		--nj 10 --cmd "$decode_cmd" \
-		--config conf/decode.config \
+		--config conf/decode.conf \
 		$graph_dir \
 		$outdir/data/test_hires_online $dir/decode_test || exit 1;
 fi
@@ -219,7 +222,7 @@ fi
 if [ $stage -le 16 ]; then
 	steps/online/nnet3/decode.sh --acwt 1.0 --post-decode-acwt 10.0 \
 		--nj 10 --cmd "$decode_cmd" --per-utt true \
-		--config conf/decode.config \
+		--config conf/decode.conf \
 		$graph_dir \
 		$outdir/data/test_hires_online $dir/decode_test_per_utt || exit 1;
 fi
