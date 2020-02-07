@@ -1,9 +1,15 @@
 #!/bin/bash
 
-data=/home/data/xfding/train_dataset/asr
-trn_set=$data/train
-trans=$data/trans.txt
-tst_set=$data/test
+base_data=/home/data/xfding/train_dataset/asr/aidatatang_200zh
+base_train=$base_data/corpus/train
+base_test=$base_data/corpus/test
+base_script=$base_data/transcript/aidatatang_200_zh_transcript.txt
+
+extra_data=/home/data/xfding/train_dataset/asr/ebo
+extra_train=$extra_data/train
+extra_test=$extra_data/test
+extra_script=$extra_data/trans.txt
+
 out_dir=/home/data/xfding/train_result/asr/notebook
 
 nj=20
@@ -17,7 +23,10 @@ gmm_stage=1
 # prepare trn/dev/tst data, lexicon, lang etc
 if [ $stage -le 1 ]; then
   echo 'Prepare all'
-  local/prepare_all.sh ${trn_set} ${tst_set} ${trans} ${out_dir} || exit 1;
+  local/prepare_all.sh \
+	  ${base_train} ${base_test} ${base_script} \
+	  ${extra_train} ${extra_test} ${extra_script} \
+	  ${out_dir} || exit 1;
 fi
 
 # GMM
