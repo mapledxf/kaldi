@@ -6,21 +6,20 @@ stage=-1
 . ./path.sh
 . ./utils/parse_options.sh
 
-if [ $# -ne 4 ]; then
-  echo "prepare_all.sh <corpus-train-dir> <test_dir> <corpus-train-transcript> <output-dir>"
-  echo " e.g prepare_all.sh /data/train /data/test /data/train/trans.txt /data/output"
+if [ $# -ne 7 ]; then
+  echo "$0 params error"
   exit 1;
 fi
 
-trn_set=$1
-test_set=$2
-trn_trans=$3
-out_dir=$4
+base_train=$1
+base_test=$2
+base_script=$3
 
-echo "transcript ${trn_trans}"
-echo "train set ${trn_set}"
-echo "test set ${test_set}"
-echo "out dir ${out_dir}"
+extra_train=$4
+extra_test=$5
+extra_script=$6
+
+out_dir=$7
 
 # download DaCiDian raw resources, convert to Kaldi lexicon format
 if [ $stage -le 1 ]; then
@@ -28,8 +27,25 @@ if [ $stage -le 1 ]; then
 fi
 
 if [ $stage -le 2 ]; then
-  local/prepare_data.sh ${trn_set} ${trn_trans} $out_dir/data/local/dict $out_dir/data/local/train $out_dir/data/train || exit 1;
-  local/prepare_data.sh ${test_set} ${trn_trans} $out_dir/data/local/dict $out_dir/data/local/test $out_dir/data/test || exit 1;
+	local/prepare_data_base.sh \
+		${out_dir}/data/local/dict/word_seg_vocab.txt \
+		${base_train} \
+		${base_test} \
+		${base_script} \
+		${out_dir}/data/local/base || exit 1;
+        local/prepare_data_extra.sh \
+                ${out_dir}/data/local/dict/word_seg_vocab.txt \
+                ${extra_train} \
+                ${extra_test} \
+                ${extra_script} \
+                ${out_dir}/data/local/extra || exit 1;
+	for f in spk2utt utt2spk wav.scp text; do
+		for data_set in train test; do
+			tmp_out=${out_dir}/data/${data_set}
+			mkdir -p $tmp_out
+			cat ${out_dir}/data/local/base_${data_set}/$f ${out_dir}/data/local/extra_${data_set}/$f | sort -k 1 > ${tmp_out}/$f
+		done
+	done
 fi
 
 # L
@@ -45,7 +61,7 @@ if [ $stage -le 4 ]; then
   echo 'Start generate LM'
   local/train_lms.sh \
       $out_dir/data/local/dict/lexicon.txt \
-      $out_dir/data/local/train/text \
+      $out_dir/data/train/text \
       $out_dir/data/local/lm || exit 1;
   echo 'Finish generate LM'
 fi
