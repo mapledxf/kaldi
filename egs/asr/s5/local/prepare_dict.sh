@@ -44,5 +44,7 @@ cat $dir/nonsilence_phones.txt | perl -e 'while(<>){ foreach $p (split(" ", $_))
   $p =~ m:^([^\d]+)(\d*)$: || die "Bad phone $_"; if($p eq "\$0"){$q{""} .= "$p ";}else{$q{$2} .= "$p ";} } } foreach $l (values %q) {print "$l\n";}' \
  >> $dir/extra_questions.txt || exit 1;
 
+# jieba's vocab format requires word count(frequency), set to 99
+awk '{print $1}' $dir/lexicon.txt | sort | uniq | awk '{print $1,88}'> $dir/word_seg_vocab.txt
 echo "local/prepare_dict.sh succeeded"
 exit 0;
