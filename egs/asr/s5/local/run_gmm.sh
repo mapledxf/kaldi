@@ -45,10 +45,10 @@ if [ $stage -le 2 ]; then
     $out_dir/data/lang_test \
     $out_dir/exp/mono \
     $out_dir/exp/mono/graph || exit 1;
-  steps/decode.sh --cmd "$decode_cmd" --config conf/decode.conf --nj $nj \
-    $out_dir/exp/mono/graph \
-    $out_dir/data/test \
-    $out_dir/exp/mono/decode_test
+#  steps/decode.sh --cmd "$decode_cmd" --config conf/decode.conf --nj $nj \
+#    $out_dir/exp/mono/graph \
+#    $out_dir/data/test \
+#    $out_dir/exp/mono/decode_test
   
   # alignment
   steps/align_si.sh --cmd "$train_cmd" --nj $nj \
@@ -75,10 +75,10 @@ if [ $stage -le 3 ]; then
     $out_dir/data/lang_test \
     $out_dir/exp/tri1 \
     $out_dir/exp/tri1/graph || exit 1;
-  steps/decode.sh --cmd "$decode_cmd" --config conf/decode.conf --nj $nj \
-    $out_dir/exp/tri1/graph \
-    $out_dir/data/test \
-    $out_dir/exp/tri1/decode_test
+#  steps/decode.sh --cmd "$decode_cmd" --config conf/decode.conf --nj $nj \
+#    $out_dir/exp/tri1/graph \
+#    $out_dir/data/test \
+#    $out_dir/exp/tri1/decode_test
 
   # alignment
   steps/align_si.sh --cmd "$train_cmd" --nj $nj \
@@ -105,10 +105,10 @@ if [ $stage -le 4 ]; then
     $out_dir/data/lang_test \
     $out_dir/exp/tri2 \
     $out_dir/exp/tri2/graph || exit 1;
-  steps/decode.sh --cmd "$decode_cmd" --config conf/decode.conf --nj $nj \
-    $out_dir/exp/tri2/graph \
-    $out_dir/data/test \
-    $out_dir/exp/tri2/decode_test
+#  steps/decode.sh --cmd "$decode_cmd" --config conf/decode.conf --nj $nj \
+#    $out_dir/exp/tri2/graph \
+#    $out_dir/data/test \
+#    $out_dir/exp/tri2/decode_test
 
   # alignment
   steps/align_si.sh --cmd "$train_cmd" --nj $nj \
@@ -134,10 +134,10 @@ if [ $stage -le 5 ]; then
     $out_dir/data/lang_test \
     $out_dir/exp/tri3 \
     $out_dir/exp/tri3/graph || exit 1;
-  steps/decode.sh --cmd "$decode_cmd" --config conf/decode.conf --nj $nj \
-    $out_dir/exp/tri3/graph \
-    $out_dir/data/test \
-    $out_dir/exp/tri3/decode_test
+#  steps/decode.sh --cmd "$decode_cmd" --config conf/decode.conf --nj $nj \
+#    $out_dir/exp/tri3/graph \
+#    $out_dir/data/test \
+#    $out_dir/exp/tri3/decode_test
 
   # alignment with fMLLR
   echo "$0: stage $stage align tri3 with fmllr"
@@ -164,10 +164,10 @@ if [ $stage -le 6 ]; then
     $out_dir/data/lang_test \
     $out_dir/exp/tri4 \
     $out_dir/exp/tri4/graph || exit 1;
-  steps/decode_fmllr.sh --cmd "$decode_cmd" --nj $nj \
-    $out_dir/exp/tri4/graph \
-    $out_dir/data/test \
-    $out_dir/exp/tri4/decode_test
+#  steps/decode_fmllr.sh --cmd "$decode_cmd" --nj $nj \
+#    $out_dir/exp/tri4/graph \
+#    $out_dir/data/test \
+#    $out_dir/exp/tri4/decode_test
 
   # aligment
   echo "$0: stage $stage align tri4 with fmllr"
@@ -194,10 +194,10 @@ if [ $stage -le 7 ]; then
     $out_dir/data/lang_test \
     $out_dir/exp/tri5 \
     $out_dir/exp/tri5/graph || exit 1;
-  steps/decode_fmllr.sh --cmd "$decode_cmd" --nj $nj \
-    $out_dir/exp/tri5/graph \
-    $out_dir/data/test \
-    $out_dir/exp/tri5/decode_test
+#  steps/decode_fmllr.sh --cmd "$decode_cmd" --nj $nj \
+#    $out_dir/exp/tri5/graph \
+#    $out_dir/data/test \
+#    $out_dir/exp/tri5/decode_test
 
   # aligment
   echo "$0: stage $stage align tri5 with fmllr"

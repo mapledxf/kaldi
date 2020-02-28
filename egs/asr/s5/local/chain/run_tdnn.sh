@@ -49,10 +49,10 @@ fi
 
 outdir=$1
 
-dir=$outdir/exp/chain/tdnn_vwm${affix:+_$affix}_sp
+dir=$outdir/exp/tdnn_vwm${affix:+_$affix}_sp
 train_set=train_sp
 ali_dir=$outdir/exp/tri5_sp_ali
-treedir=$outdir/exp/chain/tri6_7d_tree_sp
+treedir=$outdir/exp/tri6_7d_tree_sp
 lang=$outdir/data/lang_chain
 
 if [ $stage -le 6 ]; then
@@ -193,13 +193,13 @@ if [ $stage -le 12 ]; then
 	  $graph_dir
 fi
 
-if [ $stage -le 13 ]; then
-	steps/nnet3/decode.sh --acwt 1.0 --post-decode-acwt 10.0 \
-		--nj 10 --cmd "$decode_cmd" \
-		--online-ivector-dir $outdir/exp/nnet3/ivectors_test \
-		$graph_dir \
-		$outdir/data/test_hires_online $dir/decode_test || exit 1;
-fi
+#if [ $stage -le 13 ]; then
+#	steps/nnet3/decode.sh --acwt 1.0 --post-decode-acwt 10.0 \
+#		--nj 10 --cmd "$decode_cmd" \
+#		--online-ivector-dir $outdir/exp/nnet3/ivectors_test \
+#		$graph_dir \
+#		$outdir/data/test_hires_online $dir/decode_test || exit 1;
+#fi
 
 if [ $stage -le 14 ]; then
 	steps/online/nnet3/prepare_online_decoding.sh --mfcc-config conf/mfcc_hires.conf \
@@ -210,20 +210,20 @@ if [ $stage -le 14 ]; then
 	cp $graph_dir/words.txt ${dir}_online/words.txt
 fi
 
-dir=${dir}_online
-if [ $stage -le 15 ]; then
-	steps/online/nnet3/decode.sh --acwt 1.0 --post-decode-acwt 10.0 \
-		--nj 10 --cmd "$decode_cmd" \
-		--config conf/decode.conf \
-		$graph_dir \
-		$outdir/data/test_hires_online $dir/decode_test || exit 1;
-fi
-
-if [ $stage -le 16 ]; then
-	steps/online/nnet3/decode.sh --acwt 1.0 --post-decode-acwt 10.0 \
-		--nj 10 --cmd "$decode_cmd" --per-utt true \
-		--config conf/decode.conf \
-		$graph_dir \
-		$outdir/data/test_hires_online $dir/decode_test_per_utt || exit 1;
-fi
+#dir=${dir}_online
+#if [ $stage -le 15 ]; then
+#	steps/online/nnet3/decode.sh --acwt 1.0 --post-decode-acwt 10.0 \
+#		--nj 10 --cmd "$decode_cmd" \
+#		--config conf/decode.conf \
+#		$graph_dir \
+#		$outdir/data/test_hires_online $dir/decode_test || exit 1;
+#fi
+#
+#if [ $stage -le 16 ]; then
+#	steps/online/nnet3/decode.sh --acwt 1.0 --post-decode-acwt 10.0 \
+#		--nj 10 --cmd "$decode_cmd" --per-utt true \
+#		--config conf/decode.conf \
+#		$graph_dir \
+#		$outdir/data/test_hires_online $dir/decode_test_per_utt || exit 1;
+#fi
 exit;
