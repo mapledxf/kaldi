@@ -13,7 +13,7 @@ dir=$1
 download_dir=$dir/BigCiDian
 # download the DaCiDian from github
 if [ ! -d $download_dir ]; then
-  git clone https://github.com/mapledxf/BigCiDian.git $download_dir
+  git clone --branch lexicon --single-branch https://github.com/mapledxf/BigCiDian.git $download_dir
 fi
 
 # here we map <UNK> to the phone spn(spoken noise)
@@ -23,6 +23,8 @@ python $download_dir/utils/convert_pinyin_chart_to_mapping.py \
 	$dir/pinyin_to_phone.txt
 python $download_dir/utils/DaCiDian.py \
 	$download_dir/CN/word_to_pinyin.txt \
+	$download_dir/CN/append.txt \
+	$download_dir/CN/remove.txt \
 	$dir/pinyin_to_phone.txt > $dir/CN.txt
 
 iconv -f ISO_8859-10 -t utf8 ${download_dir}/EN/cmudict-0.7b.txt >$dir/tmp || exit 1;
@@ -30,7 +32,9 @@ python $download_dir/utils/map_arpa_to_ipa.py \
 	$download_dir/EN/ARPA2IPA.map \
 	$dir/tmp \
 	$dir/EN.txt || exit 1;
-cat $dir/EN.txt $dir/CN.txt | sort -u > $dir/lexicon.txt
+#cat $dir/EN.txt $dir/CN.txt | sort -u > $dir/lexicon.txt
+cat $dir/CN.txt | sort -u > $dir/lexicon.txt
+
 echo -e "<UNK>\tspn" >> $dir/lexicon.txt
 
 python $download_dir/utils/dict_to_phoneset.py $dir/lexicon.txt $dir/nonsilence_phones.txt
