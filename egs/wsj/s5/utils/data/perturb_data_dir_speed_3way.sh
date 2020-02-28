@@ -42,10 +42,10 @@ if [ ! -f $srcdir/wav.scp ]; then
   exit 1
 fi
 
-if [ -f $destdir/feats.scp ]; then
-  echo "$0: $destdir/feats.scp already exists: refusing to run this (please delete $destdir/feats.scp if you want this to run)"
-  exit 1
-fi
+#if [ -f $destdir/feats.scp ]; then
+#  echo "$0: $destdir/feats.scp already exists: refusing to run this (please delete $destdir/feats.scp if you want this to run)"
+#  exit 1
+#fi
 
 echo "$0: making sure the utt2dur and the reco2dur files are present"
 echo "... in ${srcdir}, because obtaining it after speed-perturbing"
