@@ -27,12 +27,14 @@ if [ $stage -le 1 ]; then
 fi
 
 if [ $stage -le 2 ]; then
-	local/prepare_data_base.sh \
-		${out_dir}/data/local/dict/word_seg_vocab.txt \
-		${base_train} \
-		${base_test} \
-		${base_script} \
-		${out_dir}/data/local/base || exit 1;
+	if [ -f $base_train ]; then
+		local/prepare_data_base.sh \
+			${out_dir}/data/local/dict/word_seg_vocab.txt \
+			${base_train} \
+			${base_test} \
+			${base_script} \
+			${out_dir}/data/local/base || exit 1;
+	fi
         local/prepare_data_extra.sh \
                 ${out_dir}/data/local/dict/word_seg_vocab.txt \
                 ${extra_train} \
@@ -43,7 +45,11 @@ if [ $stage -le 2 ]; then
 		for data_set in train test; do
 			tmp_out=${out_dir}/data/${data_set}
 			mkdir -p $tmp_out
-			cat ${out_dir}/data/local/base_${data_set}/$f ${out_dir}/data/local/extra_${data_set}/$f | sort -k 1 > ${tmp_out}/$f
+			if [ -f $base_train ]; then
+				cat ${out_dir}/data/local/base_${data_set}/$f ${out_dir}/data/local/extra_${data_set}/$f | sort -k 1 > ${tmp_out}/$f
+			else
+				cat ${out_dir}/data/local/extra_${data_set}/$f | sort -k 1 > ${tmp_out}/$f
+			fi
 		done
 	done
 fi
