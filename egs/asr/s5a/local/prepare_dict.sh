@@ -146,7 +146,8 @@ cat $dict_dir/lexicon-en/lexicon-en-phn.txt | \
 if [ ! -f $dict_dir/cedict/cedict_1_0_ts_utf-8_mdbg.txt ]; then
   echo "------------- Downloading cedit dictionary ---------------"
   mkdir -p $dict_dir/cedict
-  wget -P $dict_dir/cedict http://www.mdbg.net/chindict/export/cedict/cedict_1_0_ts_utf-8_mdbg.txt.gz
+#  wget -P $dict_dir/cedict http://www.mdbg.net/chindict/export/cedict/cedict_1_0_ts_utf-8_mdbg.txt.gz
+  wget -P $dict_dir/cedict https://www.mdbg.net/chinese/export/cedict/cedict_1_0_ts_utf-8_mdbg.txt.gz
   gunzip $dict_dir/cedict/cedict_1_0_ts_utf-8_mdbg.txt.gz
 fi
 
