@@ -6,7 +6,7 @@
 . ./cmd.sh
 . ./path.sh
 
-stage=0
+stage=5
 
 test_sets="aishell aidatatang magicdata thchs"
 corpus_lm=false   # interpolate with corpus lm
@@ -38,7 +38,8 @@ if [ $stage -le 1 ]; then
 	local/vwm_data_prep.sh $vwm_noisy_48h $out_dir/data/vwm_noisy_48 || exit 1;
 fi
 
-echo "$0: stage 1 completed"
+echo "$0: stage 1 data preparation completed"
+
 #Dictionary generation
 if [ $stage -le 2 ]; then
 	# normalize transcripts
@@ -49,7 +50,7 @@ if [ $stage -le 2 ]; then
 	local/prepare_dict.sh || exit 1;
 fi
 
-echo "$0: stage 2 completed"
+echo "$0: stage 2 dictionary generation completed"
 
 #LM preparation
 if [ $stage -le 3 ]; then
@@ -57,7 +58,7 @@ if [ $stage -le 3 ]; then
 	local/train_lms.sh || exit 1;
 fi
 
-echo "$0: stage 3 completed"
+echo "$0: stage 3 LM preparation completed"
 
 #LM generation
 if [ $stage -le 4 ]; then
@@ -74,7 +75,7 @@ if [ $stage -le 4 ]; then
 		$out_dir/data/lang_combined_tg || exit 1;
 fi
 
-echo "$0: stage 4 completed"
+echo "$0: stage 4 LM generation completed"
 
 #MFCC generation for train set
 if [ $stage -le 5 ]; then
@@ -96,7 +97,7 @@ if [ $stage -le 5 ]; then
 	wait
 fi
 
-echo "$0: stage 5 completed"
+echo "$0: stage 5 MFCC generation for train set completed"
 
 #MFCC generation for test set
 if [ $stage -le 6 ]; then
@@ -119,36 +120,40 @@ if [ $stage -le 6 ]; then
 	fi
 fi
 
-echo "$0: stage 6 completed"
+echo "$0: stage 6 MFCC generation for test set completed"
 
 #Train mono
 if [ $stage -le 7 ]; then
 	# train mono and tri1a using aishell(~120k)
 	# mono has been used in aishell recipe, so no test
+	utils/combine_data.sh \
+                $out_dir/data/train_mono \
+                $out_dir/data/{vwm_noisy_48,aishell}/train || exit 1;
+
 	steps/train_mono.sh --boost-silence 1.25 --nj 20 --cmd "$train_cmd" \
-		$out_dir/data/aishell/train \
+		$out_dir/data/train_mono \
 		$out_dir/data/lang \
 		$out_dir/exp/mono || exit 1;
-
 	steps/align_si.sh --boost-silence 1.25 --nj 20 --cmd "$train_cmd" \
-		$out_dir/data/aishell/train \
+		$out_dir/data/train_mono \
 		$out_dir/data/lang \
 		$out_dir/exp/mono \
 		$out_dir/exp/mono_ali || exit 1;
 	steps/train_deltas.sh --boost-silence 1.25 --cmd "$train_cmd" 2500 20000 \
-		$out_dir/data/aishell/train \
+		$out_dir/data/train_mono \
 		$out_dir/data/lang \
 		$out_dir/exp/mono_ali \
 		$out_dir/exp/tri1a || exit 1;
 fi
 
-echo "$0: stage 7 completed"
+echo "$0: stage 7 train mono completed"
+
 #Train tri1b
 if [ $stage -le 8 ]; then
-	# train tri1b using aishell + primewords + stcmds + thchs (~280k)
+	# train tri1b using vwm + aishell + primewords + stcmds + thchs (~280k)
 	utils/combine_data.sh \
 		$out_dir/data/train_280k \
-		$out_dir/data/{aishell,primewords,stcmds,thchs}/train || exit 1;
+		$out_dir/data/{vwm_noisy_48,aishell,primewords,stcmds,thchs}/train || exit 1;
 
 	steps/align_si.sh --boost-silence 1.25 --nj 40 --cmd "$train_cmd" \
 		$out_dir/data/train_280k \
@@ -162,7 +167,7 @@ if [ $stage -le 8 ]; then
 		$out_dir/exp/tri1b || exit 1;
 fi
 
-echo "$0: stage 8 completed"
+echo "$0: stage 8 train tri1b completed"
 
 #Test tri1b
 if [ $stage -le 9 ]; then
@@ -184,7 +189,7 @@ if [ $stage -le 9 ]; then
 	fi
 fi
 
-echo "$0: stage 9 completed"
+echo "$0: stage 9 test tri1b completed"
 
 #Train tri2a
 if [ $stage -le 10 ]; then
@@ -201,7 +206,7 @@ if [ $stage -le 10 ]; then
 		$out_dir/exp/tri2a || exit 1;
 fi
 
-echo "$0: stage 10 completed"
+echo "$0: stage 10 train tri2a completed"
 
 #Test tri2a
 if [ $stage -le 11 ]; then
@@ -223,14 +228,14 @@ if [ $stage -le 11 ]; then
 	fi
 fi
 
-echo "$0: stage 11 completed"
+echo "$0: stage 11 test tri2a completed"
 
 #Train tri3a
 if [ $stage -le 12 ]; then
 	# train tri3a using aidatatang + aishell + primewords + stcmds + thchs (~440k)
 	utils/combine_data.sh \
 		$out_dir/data/train_440k \
-		$out_dir/data/{aidatatang,aishell,primewords,stcmds,thchs}/train || exit 1;
+		$out_dir/data/{vwm_noisy_48,aidatatang,aishell,primewords,stcmds,thchs}/train || exit 1;
 
 	steps/align_si.sh --boost-silence 1.25 --nj 60 --cmd "$train_cmd" \
 		$out_dir/data/train_440k \
@@ -244,7 +249,7 @@ if [ $stage -le 12 ]; then
 		$out_dir/exp/tri3a || exit 1;
 fi
 
-echo "$0: stage 12 completed"
+echo "$0: stage 12 train tri3a completed"
 
 #Test tri3a
 if [ $stage -le 13 ]; then
@@ -266,14 +271,14 @@ if [ $stage -le 13 ]; then
 	fi
 fi
 
-echo "$0: stage 13 completed"
+echo "$0: stage 13 test tri3a completed"
 
 #Train tri4a
 if [ $stage -le 14 ]; then
 	# train tri4a using all
 	utils/combine_data.sh \
 		$out_dir/data/train_all \
-		$out_dir/data/{aidatatang,aishell,magicdata,primewords,stcmds,thchs}/train || exit 1;
+		$out_dir/data/{vwm_noisy_48,aidatatang,aishell,magicdata,primewords,stcmds,thchs}/train || exit 1;
 
 	steps/align_fmllr.sh --cmd "$train_cmd" --nj 100 \
 		$out_dir/data/train_all \
@@ -287,7 +292,7 @@ if [ $stage -le 14 ]; then
 		$out_dir/exp/tri4a || exit 1;
 fi
 
-echo "$0: stage 14 completed"
+echo "$0: stage 14 train tri4a completed"
 
 #Test tri4a
 if [ $stage -le 15 ]; then
@@ -309,15 +314,15 @@ if [ $stage -le 15 ]; then
 	fi
 fi
 
-echo "$0: stage 15 completed"
+echo "$0: stage 15 test tri4a completed"
 
 #Clean up
 if [ $stage -le 16 ]; then
 	# run clean and retrain
-	local/run_cleanup_segmentation.sh --test-sets "$test_sets" --corpus-lm $corpus_lm
+	local/run_cleanup_segmentation.sh --test-sets "$test_sets"
 fi
 
-echo "$0: stage 16 completed"
+echo "$0: stage 16 clean up completed"
 
 #Collect WER
 if [ $stage -le 17 ]; then
@@ -333,7 +338,7 @@ if [ $stage -le 17 ]; then
 	fi
 fi
 
-echo "$0: stage 17 completed"
+echo "$0: stage 17 collect WER completed"
 
 #Train chain
 if [ $stage -le 18 ]; then
@@ -348,4 +353,4 @@ if [ $stage -le 18 ]; then
 	fi
 fi
 
-echo "$0: stage 18 completed"
+echo "$0: stage 18 train chain completed"
