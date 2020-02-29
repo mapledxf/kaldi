@@ -1,4 +1,0 @@
-nohup: ignoring input
-./run.sh: stage 1 completed
-utils/combine_data.sh /home/data/xfding/train_result/asr/multi/data/train_combined /home/data/xfding/train_result/asr/multi/data/vwm_noisy_48/train /home/data/xfding/train_result/asr/multi/data/aidatatang/train /home/data/xfding/train_result/asr/multi/data/aishell/train /home/data/xfding/train_result/asr/multi/data/magicdata/train /home/data/xfding/train_result/asr/multi/data/primewords/train /home/data/xfding/train_result/asr/multi/data/stcmds/train /home/data/xfding/train_result/asr/multi/data/thchs/train
-utils/combine_data.sh: no such file /home/data/xfding/train_result/asr/multi/data/vwm_noisy_48/train/utt2spk
