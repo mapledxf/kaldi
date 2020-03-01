@@ -39,9 +39,10 @@ for x in train dev test; do
     sed 's/，//g' | sed 's/－//g' |\
     sed 's/：//g' | sed 's/；//g' |\
     sed 's/　//g' | sed 's/。//g' |\
+    sed 's/\[//g' | sed 's/]//g' |\
+    sed 's/FIL//g' | sed 's/SPK//g' |\
     local/word_segment.py |\
     tr '[a-z]' '[A-Z]' |\
-    sed 's/FIL/[FIL]/g' | sed 's/SPK/[SPK]/' |\
     awk '{if (NF > 1) print $0;}' > $data/$x/text
   for file in wav.scp utt2spk text; do
     sort $data/$x/$file -o $data/$x/$file
