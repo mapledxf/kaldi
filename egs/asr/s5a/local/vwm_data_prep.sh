@@ -12,16 +12,10 @@ train_dir=$data/local/train
 
 mkdir -p $train_dir
 mkdir -p $data/train
-mkdir -p $vwm_audio_dir
 
 echo "**** Creating VWM data folder ****"
-n1=`ls ${vwm_audio_dir} | wc -l`
-n2=`cat ${src_dir}/script/script.txt | wc -l`
-if [ ${n1} -ne ${n2} ]; then
-	python local/vwm_format.py $src_dir $out_dir
-else
-	echo "Data alread formatted"
-fi
+echo "Formatting data"
+[ -d $vwm_audio_dir ] &&  echo "$vwm_audio_dir exists, skip" || python local/vwm_format.py $src_dir $out_dir
 
 find $vwm_audio_dir -iname "*.wav" > $train_dir/wav.flist
 sed -e 's/\.wav//' $train_dir/wav.flist | awk -F '/' '{print $NF}' > $train_dir/utt.list_all

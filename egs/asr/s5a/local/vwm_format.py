@@ -28,7 +28,7 @@ for line in script.readlines():
     old_path = os.path.join(vwm_wav_dir, wav)
     if os.path.isfile(old_path):
         copyfile(old_path, new_path)
-        new_script.write(new_name + " " + trans)
+        new_script.write(new_name + " " + trans.replace(' ',' '))
     else:
         print (old_path + " not exist")
 
