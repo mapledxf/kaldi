@@ -6,7 +6,7 @@
 . ./cmd.sh
 . ./path.sh
 
-stage=0
+stage=6
 
 test_sets="aishell aidatatang magicdata thchs"
 corpus_lm=false   # interpolate with corpus lm
@@ -49,10 +49,11 @@ echo "$0: stage 1 data preparation completed"
 if [ $stage -le 2 ]; then
 	# normalize transcripts
 	utils/combine_data.sh $out_dir/data/train_combined \
-#		$out_dir/data/{vwm_noisy_48h,vwm_quite-30h,aidatatang,aishell,magicdata,primewords,stcmds,thchs}/train || exit 1;
                 $out_dir/data/{vwm_noisy_48h,vwm_quite-30h,aidatatang}/train || exit 1;
+#               $out_dir/data/{vwm_noisy_48h,vwm_quite-30h,aidatatang,aishell,magicdata,primewords,stcmds,thchs}/train || exit 1;
 	utils/combine_data.sh $out_dir/data/test_combined \
-		$out_dir/data/{aidatatang,aishell,magicdata,thchs}/{dev,test} || exit 1;
+                $out_dir/data/aidatatang/{dev,test} || exit 1;
+#               $out_dir/data/{aidatatang,aishell,magicdata,thchs}/{dev,test} || exit 1;
 	local/prepare_dict.sh || exit 1;
 fi
 
@@ -87,7 +88,8 @@ echo "$0: stage 4 LM generation completed"
 if [ $stage -le 5 ]; then
 	# make features
 	mfccdir=mfcc
-	corpora="vwm_noisy_48 aidatatang aishell magicdata primewords stcmds thchs"
+#	corpora="vwm_noisy_48 aidatatang aishell magicdata primewords stcmds thchs"
+        corpora="vwm_noisy_48h vwm_quite-30h aidatatang"
 	for c in $corpora; do
 	(
 		steps/make_mfcc_pitch_online.sh --cmd "$train_cmd" --nj 20 \
@@ -132,21 +134,17 @@ echo "$0: stage 6 MFCC generation for test set completed"
 if [ $stage -le 7 ]; then
 	# train mono and tri1a using aishell(~120k)
 	# mono has been used in aishell recipe, so no test
-	utils/combine_data.sh \
-                $out_dir/data/train_mono \
-                $out_dir/data/{vwm_quite-30h,vwm_noisy_48h,aidatatang}/train || exit 1;
-
 	steps/train_mono.sh --boost-silence 1.25 --nj 20 --cmd "$train_cmd" \
-		$out_dir/data/train_mono \
+		$out_dir/data/train_combined \
 		$out_dir/data/lang \
 		$out_dir/exp/mono || exit 1;
 	steps/align_si.sh --boost-silence 1.25 --nj 20 --cmd "$train_cmd" \
-		$out_dir/data/train_mono \
+		$out_dir/data/train_combined \
 		$out_dir/data/lang \
 		$out_dir/exp/mono \
 		$out_dir/exp/mono_ali || exit 1;
 	steps/train_deltas.sh --boost-silence 1.25 --cmd "$train_cmd" 2500 20000 \
-		$out_dir/data/train_mono \
+		$out_dir/data/train_combined \
 		$out_dir/data/lang \
 		$out_dir/exp/mono_ali \
 		$out_dir/exp/tri1a || exit 1;
@@ -159,8 +157,8 @@ if [ $stage -le 8 ]; then
 	# train tri1b using vwm + aishell + primewords + stcmds + thchs (~280k)
 	utils/combine_data.sh \
 		$out_dir/data/train_280k \
-#		$out_dir/data/{vwm_quite-30h,vwm_noisy_48h,aidatatang,primewords,stcmds,thchs}/train || exit 1;
                 $out_dir/data/{vwm_quite-30h,vwm_noisy_48h,aidatatang}/train || exit 1;
+#               $out_dir/data/{vwm_quite-30h,vwm_noisy_48h,aidatatang,primewords,stcmds,thchs}/train || exit 1;
 
 	steps/align_si.sh --boost-silence 1.25 --nj 40 --cmd "$train_cmd" \
 		$out_dir/data/train_280k \
@@ -242,8 +240,8 @@ if [ $stage -le 12 ]; then
 	# train tri3a using aidatatang + aishell + primewords + stcmds + thchs (~440k)
 	utils/combine_data.sh \
 		$out_dir/data/train_440k \
-#		$out_dir/data/{vwm_quite-30h,vwm_noisy_48h,aidatatang,aishell,primewords,stcmds,thchs}/train || exit 1;
                 $out_dir/data/{vwm_quite-30h,vwm_noisy_48h,aidatatang}/train || exit 1;
+#               $out_dir/data/{vwm_quite-30h,vwm_noisy_48h,aidatatang,aishell,primewords,stcmds,thchs}/train || exit 1;
 
 	steps/align_si.sh --boost-silence 1.25 --nj 60 --cmd "$train_cmd" \
 		$out_dir/data/train_440k \
@@ -286,8 +284,8 @@ if [ $stage -le 14 ]; then
 	# train tri4a using all
 	utils/combine_data.sh \
 		$out_dir/data/train_all \
-#		$out_dir/data/{vwm_quite-30h,vwm_noisy_48h,aidatatang,aishell,magicdata,primewords,stcmds,thchs}/train || exit 1;
                 $out_dir/data/{vwm_quite-30h,vwm_noisy_48h,aidatatang}/train || exit 1;
+#               $out_dir/data/{vwm_quite-30h,vwm_noisy_48h,aidatatang,aishell,magicdata,primewords,stcmds,thchs}/train || exit 1;
 
 	steps/align_fmllr.sh --cmd "$train_cmd" --nj 100 \
 		$out_dir/data/train_all \
