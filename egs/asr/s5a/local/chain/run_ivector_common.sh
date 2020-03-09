@@ -19,7 +19,7 @@ nnet3_affix=_cleaned     # affix for exp/nnet3 directory to put iVector stuff in
                          # becomes exp/nnet3_cleaned or whatever.
 
 out_dir=/home/data/xfding/train_result/asr/multi
-enable_test=false
+test_enable=false
 
 . ./cmd.sh
 . ./path.sh

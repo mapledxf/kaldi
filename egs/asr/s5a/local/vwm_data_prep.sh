@@ -1,27 +1,27 @@
 #!/bin/bash
 . ./path.sh || exit 1;
-if [ $# != 2 ]; then
-  echo "Usage: $0 <corpus-path> <data-path>"
-  echo " $0 /noisy data/noisy"
-  exit 1;
-fi
 
-vwm_audio_dir=$1/wav
-vwm_text=$1/script/trans.txt
+src_dir=$1
+out_dir=$2
 
-data=$2
+vwm_audio_dir=$out_dir/wav
+vwm_text=$out_dir/script/script.txt
+
+data=$3
 train_dir=$data/local/train
 
 mkdir -p $train_dir
 mkdir -p $data/train
-
-# data directory check
-if [ ! -d $aidatatang_audio_dir ] || [ ! -f $aidatatang_text ]; then
-  echo "Error: $0 requires two directory arguments"
-  exit 1;
-fi
+mkdir -p $vwm_audio_dir
 
 echo "**** Creating VWM data folder ****"
+n1=`ls ${vwm_audio_dir} | wc -l`
+n2=`cat ${src_dir}/script/script.txt | wc -l`
+if [ ${n1} -ne ${n2} ]; then
+	python local/vwm_format.py $src_dir $out_dir
+else
+	echo "Data alread formatted"
+fi
 
 find $vwm_audio_dir -iname "*.wav" > $train_dir/wav.flist
 sed -e 's/\.wav//' $train_dir/wav.flist | awk -F '/' '{print $NF}' > $train_dir/utt.list_all
@@ -49,5 +49,5 @@ done
 
 utils/data/validate_data_dir.sh --no-feats $data/train || exit 1;
 
-echo "$0: VWM noisy 48H data preparation succeeded"
+echo "$0: VWM $out_dir data preparation succeeded"
 exit 0;

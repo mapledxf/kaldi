@@ -50,7 +50,7 @@ dropout_schedule='0,0@0.20,0.5@0.50,0'
 test_sets=""
 test_online_decoding=true  # if true, it will run the last decoding stage.
 
-enable_test=false
+test_enable=false
 out_dir=/home/data/xfding/train_result/asr/multi
 
 # End configuration section.
@@ -73,7 +73,7 @@ fi
 # run those things.
 local/chain/run_ivector_common.sh --stage $stage \
 	--out-dir "$out_dir" \
-	--enable-test "$enable_test" \
+	--test-enable "$test_enable" \
 	--train-set $train_set \
 	--test-sets "$test_sets" \
 	--gmm $gmm \
@@ -100,7 +100,6 @@ done
 # Please take this as a reference on how to specify all the options of
 # local/chain/run_chain_common.sh
 local/chain/run_chain_common.sh --stage $stage \
-	--enable_test $enable_test \
 	--out-dir $out_dir \
 	--gmm-dir $gmm_dir \
 	--ali-dir $ali_dir \

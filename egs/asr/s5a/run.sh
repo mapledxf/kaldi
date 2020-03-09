@@ -6,7 +6,7 @@
 . ./cmd.sh
 . ./path.sh
 
-stage=5
+stage=0
 
 test_sets="aishell aidatatang magicdata thchs"
 corpus_lm=false   # interpolate with corpus lm
@@ -18,7 +18,10 @@ openslr_primewords=/home/data/xfding/dataset/asr/primewords_md_2018_set1
 openslr_stcmds=/home/data/xfding/dataset/asr/ST-CMDS-20170001_1-OS
 openslr_thchs=/home/data/xfding/dataset/asr/thchs30/data_thchs30
 
-vwm_noisy_48h=/home/data/xfding/dataset/asr/noisy-48h
+vwm_noisy_48h_src=/home/data/xfding/dataset/asr/noisy-48h
+vwm_quite_30h_src=/home/data/xfding/dataset/asr/quite-30h
+vwm_noisy_48h_out=/home/data/xfding/train_dataset/asr/noisy-48h
+vwm_quite_30h_out=/home/data/xfding/train_dataset/asr/quite-30h
 
 out_dir=/home/data/xfding/train_result/asr/multi
 
@@ -29,13 +32,15 @@ test_enable=false
 
 #Data preparation
 if [ $stage -le 1 ]; then
+        local/vwm_data_prep.sh $vwm_noisy_48h_src $vwm_noisy_48h_out $out_dir/data/vwm_noisy_48h || exit 1;
+        local/vwm_data_prep.sh $vwm_quite_30h_src $vwm_quite_30h_out $out_dir/data/vwm_quite-30h || exit 1;
+
 	local/aidatatang_data_prep.sh $openslr_aidatatang $out_dir/data/aidatatang || exit 1;
-	local/aishell_data_prep.sh $openslr_aishell $out_dir/data/aishell || exit 1;
-	local/thchs-30_data_prep.sh $openslr_thchs $out_dir/data/thchs || exit 1;
-	local/magicdata_data_prep.sh $openslr_magicdata $out_dir/data/magicdata || exit 1;
-	local/primewords_data_prep.sh $openslr_primewords $out_dir/data/primewords || exit 1;
-	local/stcmds_data_prep.sh $openslr_stcmds $out_dir/data/stcmds || exit 1;
-	local/vwm_data_prep.sh $vwm_noisy_48h $out_dir/data/vwm_noisy_48 || exit 1;
+#	local/aishell_data_prep.sh $openslr_aishell $out_dir/data/aishell || exit 1;
+#	local/thchs-30_data_prep.sh $openslr_thchs $out_dir/data/thchs || exit 1;
+#	local/magicdata_data_prep.sh $openslr_magicdata $out_dir/data/magicdata || exit 1;
+#	local/primewords_data_prep.sh $openslr_primewords $out_dir/data/primewords || exit 1;
+#	local/stcmds_data_prep.sh $openslr_stcmds $out_dir/data/stcmds || exit 1;
 fi
 
 echo "$0: stage 1 data preparation completed"
@@ -44,7 +49,8 @@ echo "$0: stage 1 data preparation completed"
 if [ $stage -le 2 ]; then
 	# normalize transcripts
 	utils/combine_data.sh $out_dir/data/train_combined \
-		$out_dir/data/{vwm_noisy_48,aidatatang,aishell,magicdata,primewords,stcmds,thchs}/train || exit 1;
+#		$out_dir/data/{vwm_noisy_48h,vwm_quite-30h,aidatatang,aishell,magicdata,primewords,stcmds,thchs}/train || exit 1;
+                $out_dir/data/{vwm_noisy_48h,vwm_quite-30h,aidatatang}/train || exit 1;
 	utils/combine_data.sh $out_dir/data/test_combined \
 		$out_dir/data/{aidatatang,aishell,magicdata,thchs}/{dev,test} || exit 1;
 	local/prepare_dict.sh || exit 1;
@@ -128,7 +134,7 @@ if [ $stage -le 7 ]; then
 	# mono has been used in aishell recipe, so no test
 	utils/combine_data.sh \
                 $out_dir/data/train_mono \
-                $out_dir/data/{vwm_noisy_48,aishell}/train || exit 1;
+                $out_dir/data/{vwm_quite-30h,vwm_noisy_48h,aidatatang}/train || exit 1;
 
 	steps/train_mono.sh --boost-silence 1.25 --nj 20 --cmd "$train_cmd" \
 		$out_dir/data/train_mono \
@@ -153,7 +159,8 @@ if [ $stage -le 8 ]; then
 	# train tri1b using vwm + aishell + primewords + stcmds + thchs (~280k)
 	utils/combine_data.sh \
 		$out_dir/data/train_280k \
-		$out_dir/data/{vwm_noisy_48,aishell,primewords,stcmds,thchs}/train || exit 1;
+#		$out_dir/data/{vwm_quite-30h,vwm_noisy_48h,aidatatang,primewords,stcmds,thchs}/train || exit 1;
+                $out_dir/data/{vwm_quite-30h,vwm_noisy_48h,aidatatang}/train || exit 1;
 
 	steps/align_si.sh --boost-silence 1.25 --nj 40 --cmd "$train_cmd" \
 		$out_dir/data/train_280k \
@@ -235,7 +242,8 @@ if [ $stage -le 12 ]; then
 	# train tri3a using aidatatang + aishell + primewords + stcmds + thchs (~440k)
 	utils/combine_data.sh \
 		$out_dir/data/train_440k \
-		$out_dir/data/{vwm_noisy_48,aidatatang,aishell,primewords,stcmds,thchs}/train || exit 1;
+#		$out_dir/data/{vwm_quite-30h,vwm_noisy_48h,aidatatang,aishell,primewords,stcmds,thchs}/train || exit 1;
+                $out_dir/data/{vwm_quite-30h,vwm_noisy_48h,aidatatang}/train || exit 1;
 
 	steps/align_si.sh --boost-silence 1.25 --nj 60 --cmd "$train_cmd" \
 		$out_dir/data/train_440k \
@@ -278,7 +286,8 @@ if [ $stage -le 14 ]; then
 	# train tri4a using all
 	utils/combine_data.sh \
 		$out_dir/data/train_all \
-		$out_dir/data/{vwm_noisy_48,aidatatang,aishell,magicdata,primewords,stcmds,thchs}/train || exit 1;
+#		$out_dir/data/{vwm_quite-30h,vwm_noisy_48h,aidatatang,aishell,magicdata,primewords,stcmds,thchs}/train || exit 1;
+                $out_dir/data/{vwm_quite-30h,vwm_noisy_48h,aidatatang}/train || exit 1;
 
 	steps/align_fmllr.sh --cmd "$train_cmd" --nj 100 \
 		$out_dir/data/train_all \
@@ -319,7 +328,12 @@ echo "$0: stage 15 test tri4a completed"
 #Clean up
 if [ $stage -le 16 ]; then
 	# run clean and retrain
-	local/run_cleanup_segmentation.sh --test-sets "$test_sets"
+	local/run_cleanup_segmentation.sh \
+		--stage 0 \
+		--nj 30 \
+		--test-sets "$test_sets" \
+		--test-enable "$test_enable" \
+		--out-dir "$out_dir" || exit 1;
 fi
 
 echo "$0: stage 16 clean up completed"
@@ -343,7 +357,7 @@ echo "$0: stage 17 collect WER completed"
 #Train chain
 if [ $stage -le 18 ]; then
 	# chain modeling script
-	local/chain/run_cnn_tdnn.sh --test-sets "$test_sets" --enable-test "$enable_test"
+	local/chain/run_cnn_tdnn.sh --test-sets "$test_sets" --test-enable "$test_enable"
 	if $test_enable; then
 		for c in $test_sets; do
 			for x in $out_dir/exp/chain_cleaned/*/decode_${c}*_tg; do
