@@ -122,7 +122,7 @@ if [ $stage -le 4 ]; then
 	mkdir -p $out_dir/exp/nnet3${nnet3_affix}/diag_ubm
 	temp_data_root=$out_dir/exp/nnet3${nnet3_affix}/diag_ubm
 
-	num_utts_total=$(wc -l <data/${train_set}_sp_hires/utt2spk)
+	num_utts_total=$(wc -l <${out_dir}/data/${train_set}_sp_hires/utt2spk)
 	num_utts=$[$num_utts_total/100]
 	utils/data/subset_data_dir.sh \
 		$out_dir/data/${train_set}_sp_hires \
