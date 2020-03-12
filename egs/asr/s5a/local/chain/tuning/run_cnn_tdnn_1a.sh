@@ -46,6 +46,13 @@ remove_egs=true
 common_egs_dir=
 xent_regularize=0.1
 dropout_schedule='0,0@0.20,0.5@0.50,0'
+num_jobs_initial=1
+num_jobs_final=1
+num_epochs=4
+initial_effective_lrate=0.00015
+final_effective_lrate=0.000015
+max_param_change=2.0
+minibatch_size=128,64
 
 test_sets=""
 test_online_decoding=true  # if true, it will run the last decoding stage.
@@ -186,14 +193,14 @@ if [ $stage -le 15 ]; then
 		--egs.chunk-width $frames_per_eg \
 		--trainer.dropout-schedule $dropout_schedule \
 		--trainer.add-option="--optimization.memory-compression-level=2" \
-		--trainer.num-chunk-per-minibatch 128,64 \
+		--trainer.num-chunk-per-minibatch $minibatch_size \
 		--trainer.frames-per-iter 3000000 \
-		--trainer.num-epochs 4 \
-		--trainer.optimization.num-jobs-initial 3 \
-		--trainer.optimization.num-jobs-final 16 \
-		--trainer.optimization.initial-effective-lrate 0.00015 \
-		--trainer.optimization.final-effective-lrate 0.000015 \
-		--trainer.max-param-change 2.0 \
+		--trainer.num-epochs $num_epochs \
+		--trainer.optimization.num-jobs-initial $num_jobs_initial \
+		--trainer.optimization.num-jobs-final $num_jobs_final \
+		--trainer.optimization.initial-effective-lrate $initial_effective_lrate \
+		--trainer.optimization.final-effective-lrate $final_effective_lrate \
+		--trainer.max-param-change $max_param_change \
 		--cleanup.remove-egs $remove_egs \
 		--feat-dir $train_data_dir \
 		--tree-dir $tree_dir \
