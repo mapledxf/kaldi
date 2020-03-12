@@ -6,7 +6,7 @@
 . ./cmd.sh
 . ./path.sh
 
-stage=6
+stage=0
 
 test_sets="aishell aidatatang magicdata thchs"
 corpus_lm=false   # interpolate with corpus lm
@@ -134,17 +134,21 @@ echo "$0: stage 6 MFCC generation for test set completed"
 if [ $stage -le 7 ]; then
 	# train mono and tri1a using aishell(~120k)
 	# mono has been used in aishell recipe, so no test
+	utils/combine_data.sh \
+		$out_dir/data/train_mono \
+		$out_dir/data/{vwm_quite-30h,vwm_noisy_48h,aidatatang}/train || exit 1;
+
 	steps/train_mono.sh --boost-silence 1.25 --nj 20 --cmd "$train_cmd" \
-		$out_dir/data/train_combined \
+		$out_dir/data/train_mono \
 		$out_dir/data/lang \
 		$out_dir/exp/mono || exit 1;
 	steps/align_si.sh --boost-silence 1.25 --nj 20 --cmd "$train_cmd" \
-		$out_dir/data/train_combined \
+		$out_dir/data/train_mono \
 		$out_dir/data/lang \
 		$out_dir/exp/mono \
 		$out_dir/exp/mono_ali || exit 1;
 	steps/train_deltas.sh --boost-silence 1.25 --cmd "$train_cmd" 2500 20000 \
-		$out_dir/data/train_combined \
+		$out_dir/data/train_mono \
 		$out_dir/data/lang \
 		$out_dir/exp/mono_ali \
 		$out_dir/exp/tri1a || exit 1;
@@ -327,8 +331,7 @@ echo "$0: stage 15 test tri4a completed"
 if [ $stage -le 16 ]; then
 	# run clean and retrain
 	local/run_cleanup_segmentation.sh \
-		--stage 0 \
-		--nj 30 \
+		--nj 10 \
 		--test-sets "$test_sets" \
 		--test-enable "$test_enable" \
 		--out-dir "$out_dir" || exit 1;
@@ -355,7 +358,9 @@ echo "$0: stage 17 collect WER completed"
 #Train chain
 if [ $stage -le 18 ]; then
 	# chain modeling script
-	local/chain/run_cnn_tdnn.sh --test-sets "$test_sets" --test-enable "$test_enable"
+	local/chain/run_cnn_tdnn.sh \
+		--test-sets "$test_sets" \
+		--test-enable "$test_enable"
 	if $test_enable; then
 		for c in $test_sets; do
 			for x in $out_dir/exp/chain_cleaned/*/decode_${c}*_tg; do
