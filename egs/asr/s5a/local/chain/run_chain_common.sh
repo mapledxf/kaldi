@@ -35,8 +35,8 @@ for f in $gmm_dir/final.mdl $ali_dir/ali.1.gz $lores_train_data_dir/feats.scp; d
 	[ ! -f $f ] && echo "$0: expected file $f to exist" && exit 1
 done
 
-if [ $stage -le 11 ]; then
-	echo "$0: creating lang directory with one state per phone."
+if [ $stage -le 26 ]; then
+	echo "$0: stage 26 creating lang directory with one state per phone."
 	# Create a version of the lang/ directory that has one state per phone in the
 	# topo file. [note, it really has two states.. the first one is only repeated
   	# once, the second one has zero or more repeats.]
@@ -58,8 +58,8 @@ if [ $stage -le 11 ]; then
 	fi
 fi
 
-if [ $stage -le 12 ]; then
-	echo "$0: aligning as lattices"
+if [ $stage -le 27 ]; then
+	echo "$0: stage 27 aligning as lattices"
 	# Get the alignments as lattices (gives the chain training more freedom).
 	# use the same num-jobs as the alignments
 	nj=$(cat ${ali_dir}/num_jobs) || exit 1;
@@ -68,8 +68,8 @@ if [ $stage -le 12 ]; then
 	rm $lat_dir/fsts.*.gz # save space
 fi
 
-if [ $stage -le 13 ]; then
-	echo "$0: building tree"
+if [ $stage -le 28 ]; then
+	echo "$0: stage 28 building tree"
 	# Build a tree using our new topology. We know we have alignments for the
 	# speed-perturbed data (local/nnet3/run_ivector_common.sh made them), so use
 	# those.
@@ -83,4 +83,3 @@ if [ $stage -le 13 ]; then
 fi
 
 echo "$0: chain common finished successfully"
-exit 0;

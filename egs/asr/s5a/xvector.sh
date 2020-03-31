@@ -45,6 +45,8 @@ eval_trials_core=$out_dir/data/eval_test/trials/core-core.lst
 
 stage=0
 
+decode=false
+
 . utils/parse_options.sh
 
 if [ $stage -le 0 ]; then
@@ -70,7 +72,7 @@ fi
 if [ $stage -le 1 ]; then
     echo "stage 1: Generate MFCC"
   # Make MFCCs and compute the energy-based VAD for each dataset
-    steps/make_mfcc.sh --write-utt2num-frames true --mfcc-config conf/mfcc.conf --nj 80 --cmd "$train_cmd" \
+    steps/make_mfcc.sh --write-utt2num-frames true --mfcc-config conf/mfcc_xvector.conf --nj 80 --cmd "$train_cmd" \
       $out_dir/data/train $out_dir/exp/make_mfcc $mfccdir
     utils/fix_data_dir.sh $out_dir/data/train
     sid/compute_vad_decision.sh --nj 80 --cmd "$train_cmd" \
@@ -126,7 +128,7 @@ if [ $stage -le 3 ]; then
   # Make MFCCs for the augmented data.  Note that we do not compute a new
   # vad.scp file here.  Instead, we use the vad.scp from the clean version of
   # the list.
-  steps/make_mfcc.sh --mfcc-config conf/mfcc.conf --nj 80 --cmd "$train_cmd" \
+  steps/make_mfcc.sh --mfcc-config conf/mfcc_xvector.conf --nj 80 --cmd "$train_cmd" \
     $out_dir/data/train_aug_1m $out_dir/exp/make_mfcc $mfccdir
 
   # Combine the clean and augmented VoxCeleb2 list.  This is now roughly
@@ -146,7 +148,7 @@ if [ $stage -le 4 ]; then
 fi
 
 if [ $stage -le 5 ]; then
-  echo "stage 0: Clean Data"
+  echo "stage 5: Clean Data"
   # Now, we need to remove features that are too short after removing silence
   # frames.  We want atleast 5s (500 frames) per utterance.
   min_len=400
@@ -171,10 +173,110 @@ if [ $stage -le 5 ]; then
   utils/fix_data_dir.sh $out_dir/data/train_combined_no_sil
 fi
 
-echo "stage 6: Generating X-Vector"
 # Stages 6 through 8 are handled in run_xvector.sh
 local/chain/xvector/run_xvector_1a.sh --stage $stage --train-stage 0 \
   --data $out_dir/data/train_combined_no_sil --nnet-dir $nnet_dir \
   --egs-dir $nnet_dir/egs
+
+
+if !($decode); then
+	echo "Finished"
+	exit 0;
+fi
+
+if [ $stage -le 9 ]; then
+   echo "stage 9: extract x-vector"
+
+   # Now we will extract x-vectors used for centering, LDA, and PLDA training.
+   # Note that data/train_combined has well over 2 million utterances,
+   # which is far more than is needed to train the generative PLDA model.
+   # In addition, many of the utterances are very short, which causes a
+   # mismatch with our evaluation conditions.  In the next command, we
+   # create a data directory that contains the longest 200,000 recordings,
+   # which we will use to train the backend.
+   utils/subset_data_dir.sh \
+     --utt-list <(sort -n -k 2 $out_dir/data/train_combined_no_sil/utt2num_frames | tail -n 200000) \
+     $out_dir/data/train_combined \
+     $out_dir/data/train_combined_200k
+
+   sid/nnet3/xvector/extract_xvectors.sh --cmd "$train_cmd --mem 4G" --nj 80 \
+	   $nnet_dir \
+	   $out_dir/data/train_combined_200k \
+	   $nnet_dir/xvectors_train_combined_200k
+
+  # Extract x-vectors used in the evaluation.
+#  for name in sitw_eval_enroll sitw_eval_test sitw_dev_enroll sitw_dev_test; do
+#    sid/nnet3/xvector/extract_xvectors.sh --cmd "$train_cmd --mem 4G" --nj 40 \
+#      $nnet_dir \
+#      $out_dir/data/$name \
+#      $nnet_dir/xvectors_$name
+#  done
+fi
+
+if [ $stage -le 10 ]; then
+  # Compute the mean.vec used for centering.
+  $train_cmd $nnet_dir/xvectors_train_combined_200k/log/compute_mean.log \
+    ivector-mean scp:$nnet_dir/xvectors_train_combined_200k/xvector.scp \
+    $nnet_dir/xvectors_train_combined_200k/mean.vec || exit 1;
+
+  # Use LDA to decrease the dimensionality prior to PLDA.
+  lda_dim=128
+  $train_cmd $nnet_dir/xvectors_train_combined_200k/log/lda.log \
+    ivector-compute-lda --total-covariance-factor=0.0 --dim=$lda_dim \
+    "ark:ivector-subtract-global-mean scp:$nnet_dir/xvectors_train_combined_200k/xvector.scp ark:- |" \
+    ark:$out_dir/data/train_combined_200k/utt2spk $nnet_dir/xvectors_train_combined_200k/transform.mat || exit 1;
+
+  # Train the PLDA model.
+  $train_cmd $nnet_dir/xvectors_train_combined_200k/log/plda.log \
+    ivector-compute-plda ark:$out_dir/data/train_combined_200k/spk2utt \
+    "ark:ivector-subtract-global-mean scp:$nnet_dir/xvectors_train_combined_200k/xvector.scp ark:- | transform-vec $nnet_dir/xvectors_train_combined_200k/transform.mat ark:- ark:- | ivector-normalize-length ark:-  ark:- |" \
+    $nnet_dir/xvectors_train_combined_200k/plda || exit 1;
+fi
+
+if [ $stage -le 11 ]; then
+  # Compute PLDA scores for SITW dev core-core trials
+  $train_cmd $nnet_dir/scores/log/sitw_dev_core_scoring.log \
+    ivector-plda-scoring --normalize-length=true \
+    --num-utts=ark:$nnet_dir/xvectors_sitw_dev_enroll/num_utts.ark \
+    "ivector-copy-plda --smoothing=0.0 $nnet_dir/xvectors_train_combined_200k/plda - |" \
+    "ark:ivector-mean ark:data/sitw_dev_enroll/spk2utt scp:$nnet_dir/xvectors_sitw_dev_enroll/xvector.scp ark:- | ivector-subtract-global-mean $nnet_dir/xvectors_train_combined_200k/mean.vec ark:- ark:- | transform-vec $nnet_dir/xvectors_train_combined_200k/transform.mat ark:- ark:- | ivector-normalize-length ark:- ark:- |" \
+    "ark:ivector-subtract-global-mean $nnet_dir/xvectors_train_combined_200k/mean.vec scp:$nnet_dir/xvectors_sitw_dev_test/xvector.scp ark:- | transform-vec $nnet_dir/xvectors_train_combined_200k/transform.mat ark:- ark:- | ivector-normalize-length ark:- ark:- |" \
+    "cat '$sitw_dev_trials_core' | cut -d\  --fields=1,2 |" $nnet_dir/scores/sitw_dev_core_scores || exit 1;
+
+  # SITW Dev Core:
+  # EER: 3.08%
+  # minDCF(p-target=0.01): 0.3016
+  # minDCF(p-target=0.001): 0.4993
+  echo "SITW Dev Core:"
+  eer=$(paste $sitw_dev_trials_core $nnet_dir/scores/sitw_dev_core_scores | awk '{print $6, $3}' | compute-eer - 2>/dev/null)
+  mindcf1=`sid/compute_min_dcf.py --p-target 0.01 $nnet_dir/scores/sitw_dev_core_scores $sitw_dev_trials_core 2> /dev/null`
+  mindcf2=`sid/compute_min_dcf.py --p-target 0.001 $nnet_dir/scores/sitw_dev_core_scores $sitw_dev_trials_core 2> /dev/null`
+  echo "EER: $eer%"
+  echo "minDCF(p-target=0.01): $mindcf1"
+  echo "minDCF(p-target=0.001): $mindcf2"
+fi
+
+if [ $stage -le 12 ]; then
+  # Compute PLDA scores for SITW eval core-core trials
+  $train_cmd $nnet_dir/scores/log/sitw_eval_core_scoring.log \
+    ivector-plda-scoring --normalize-length=true \
+    --num-utts=ark:$nnet_dir/xvectors_sitw_eval_enroll/num_utts.ark \
+    "ivector-copy-plda --smoothing=0.0 $nnet_dir/xvectors_train_combined_200k/plda - |" \
+    "ark:ivector-mean ark:data/sitw_eval_enroll/spk2utt scp:$nnet_dir/xvectors_sitw_eval_enroll/xvector.scp ark:- | ivector-subtract-global-mean $nnet_dir/xvectors_train_combined_200k/mean.vec ark:- ark:- | transform-vec $nnet_dir/xvectors_train_combined_200k/transform.mat ark:- ark:- | ivector-normalize-length ark:- ark:- |" \
+    "ark:ivector-subtract-global-mean $nnet_dir/xvectors_train_combined_200k/mean.vec scp:$nnet_dir/xvectors_sitw_eval_test/xvector.scp ark:- | transform-vec $nnet_dir/xvectors_train_combined_200k/transform.mat ark:- ark:- | ivector-normalize-length ark:- ark:- |" \
+    "cat '$sitw_eval_trials_core' | cut -d\  --fields=1,2 |" $nnet_dir/scores/sitw_eval_core_scores || exit 1;
+
+  # SITW Eval Core:
+  # EER: 3.335%
+  # minDCF(p-target=0.01): 0.3412
+  # minDCF(p-target=0.001): 0.5106
+  echo -e "\nSITW Eval Core:";
+  eer=$(paste $sitw_eval_trials_core $nnet_dir/scores/sitw_eval_core_scores | awk '{print $6, $3}' | compute-eer - 2>/dev/null)
+  mindcf1=`sid/compute_min_dcf.py --p-target 0.01 $nnet_dir/scores/sitw_eval_core_scores $sitw_eval_trials_core 2> /dev/null`
+  mindcf2=`sid/compute_min_dcf.py --p-target 0.001 $nnet_dir/scores/sitw_eval_core_scores $sitw_eval_trials_core 2> /dev/null`
+  echo "EER: $eer%"
+  echo "minDCF(p-target=0.01): $mindcf1"
+  echo "minDCF(p-target=0.001): $mindcf2"
+fi
 
 echo "Finished"

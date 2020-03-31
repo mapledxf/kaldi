@@ -23,8 +23,6 @@ egs_dir=$out_dir/exp/xvector_nnet_1a/egs
 . ./cmd.sh
 . ./utils/parse_options.sh
 
-num_pdfs=$(awk '{print $2}' $data/utt2spk | sort | uniq -c | wc -l)
-
 # Now we create the nnet examples using sid/nnet3/xvector/get_egs.sh.
 # The argument --num-repeats is related to the number of times a speaker
 # repeats per archive.  If it seems like you're getting too many archives
@@ -50,22 +48,22 @@ num_pdfs=$(awk '{print $2}' $data/utt2spk | sort | uniq -c | wc -l)
 # the number of archives and increases the number of examples per archive.
 # Decreasing this value increases the number of archives, while decreasing the
 # number of examples per archive.
-if [ $stage -le 4 ]; then
-  echo "$0: Getting neural network training egs";
+if [ $stage -le 6 ]; then
+  echo "$0: stage 6 Getting neural network training egs";
   sid/nnet3/xvector/get_egs.sh --cmd "$train_cmd" \
     --nj 8 \
     --stage 0 \
     --frames-per-iter 1000000000 \
     --frames-per-iter-diagnostic 100000 \
-    --min-frames-per-chunk 50 \
-    --max-frames-per-chunk 50 \
+    --min-frames-per-chunk 200 \
+    --max-frames-per-chunk 400 \
     --num-diagnostic-archives 3 \
-    --num-repeats 35 \
+    --num-repeats 50 \
     "$data" $egs_dir
 fi
 
-if [ $stage -le 5 ]; then
-  echo "$0: creating neural net configs using the xconfig parser";
+if [ $stage -le 7 ]; then
+  echo "$0: stage 7 creating neural net configs using the xconfig parser";
   num_targets=$(wc -w $egs_dir/pdf2num | awk '{print $1}')
   feat_dim=$(cat $egs_dir/info/feat_dim)
 
@@ -121,9 +119,8 @@ fi
 
 dropout_schedule='0,0@0.20,0.1@0.50,0'
 srand=123
-if [ $stage -le 6 ]; then
-  nnet3-init $nnet_dir/nnet.config $nnet_dir/0.raw
-
+if [ $stage -le 8 ]; then
+#  nnet3-init $nnet_dir/nnet.config $nnet_dir/0.raw
   steps/nnet3/train_raw_dnn.py --stage=$train_stage \
     --cmd="$train_cmd" \
     --trainer.optimization.proportional-shrink 10 \
