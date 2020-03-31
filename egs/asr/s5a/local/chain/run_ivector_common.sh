@@ -35,7 +35,8 @@ for f in $out_dir/data/${train_set}/feats.scp ${gmm_dir}/final.mdl; do
 	fi
 done
 
-if [ $stage -le 1 ]; then
+if [ $stage -le 19 ]; then
+	echo "$0: stage 19 creating chain common";
 	#Although the nnet will be trained by high resolution data, we still have to
 	# perturb the normal data to get the alignment.  _sp stands for speed-perturbed
 	echo "$0: preparing directory for low-resolution speed-perturbed data (for alignment)"
@@ -53,7 +54,8 @@ if [ $stage -le 1 ]; then
 		$out_dir/data/${train_set}_sp
 fi
 
-if [ $stage -le 2 ]; then
+if [ $stage -le 20 ]; then
+	echo "$0: stage 20 align fmllr";
 	if [ -f $ali_dir/ali.1.gz ]; then
 		echo "$0: alignments in $ali_dir appear to already exist.  Please either remove them "
 		echo " ... or use a later --stage option."
@@ -65,13 +67,13 @@ if [ $stage -le 2 ]; then
 		$out_dir/data/lang $gmm_dir $ali_dir || exit 1
 fi
 
-if [ $stage -le 3 ]; then
+if [ $stage -le 21 ]; then
 	# Create high-resolution MFCC features (with 40 cepstra instead of 13).
 	# this shows how you can split across multiple file-systems.  we'll split the
 	# MFCC dir across multiple locations.  You might want to be careful here, if you
 	# have multiple copies of Kaldi checked out and run the same recipe, not to let
 	# them overwrite each other.
-	echo "$0: creating high-resolution MFCC features"
+	echo "$0: stage 21 creating high-resolution MFCC features"
 	mfccdir=$out_dir/data/${train_set}_sp_hires/data
 
 	utils/copy_data_dir.sh \
@@ -116,8 +118,8 @@ if [ $stage -le 3 ]; then
 fi
 
 
-if [ $stage -le 4 ]; then
-	echo "$0: making a subset of data to train the diagonal UBM and the PCA transform."
+if [ $stage -le 22 ]; then
+	echo "$0: stage 22 making a subset of data to train the diagonal UBM and the PCA transform."
 	# We'll use one hundredth of the data, since whole training set is very large.
 	mkdir -p $out_dir/exp/nnet3${nnet3_affix}/diag_ubm
 	temp_data_root=$out_dir/exp/nnet3${nnet3_affix}/diag_ubm
@@ -147,11 +149,11 @@ if [ $stage -le 4 ]; then
 fi
 
 
-if [ $stage -le 5 ]; then
+if [ $stage -le 23 ]; then
 	# iVector extractors can in general be sensitive to the amount of data, but
 	# this one has a fairly small dim (defaults to 100) so we don't use all of it,
 	# we use just the 60k subset (about one fifth of the data, or 200 hours).
-	echo "$0: training the iVector extractor"
+	echo "$0: stage 23 training the iVector extractor"
 	steps/online/nnet2/train_ivector_extractor.sh --cmd "$train_cmd" --nj 10 \
 		--num-processes $num_processes \
 		$out_dir/data/${train_set}_sp_hires_60k \
@@ -159,8 +161,8 @@ if [ $stage -le 5 ]; then
 		$out_dir/exp/nnet3${nnet3_affix}/extractor || exit 1;
 fi
 
-if [ $stage -le 6 ]; then
-	echo "$0: extracting iVectors for training data"
+if [ $stage -le 24 ]; then
+	echo "$0: stage 24 extracting iVectors for training data"
 	ivectordir=$out_dir/exp/nnet3${nnet3_affix}/ivectors_${train_set}_sp_hires
 	# We extract iVectors on the speed-perturbed training data after combining
 	# short segments, which will be what we train the system on.  With
@@ -180,9 +182,9 @@ if [ $stage -le 6 ]; then
 		$ivectordir || exit 1;
 fi
 
-if [ $stage -le 7 ]; then
+if [ $stage -le 25 ]; then
+        echo "$0: stage 25 extracting iVectors for test data"
         if $test_enable; then
-		echo "$0: extracting iVectors for test data"
 		for data in $test_sets; do
 			steps/online/nnet2/extract_ivectors_online.sh --cmd "$train_cmd" --nj 10 \
 				$out_dir/data/${data}/test_hires \
@@ -192,4 +194,3 @@ if [ $stage -le 7 ]; then
 	fi
 fi
 echo "$0: iVectors extracted successfully"
-exit 0;
