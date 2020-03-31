@@ -75,16 +75,21 @@ where "nvcc" is installed.
 EOF
 fi
 
-# The iVector-extraction and feature-dumping parts are the same as the standard
-# nnet3 setup, and you can skip them by setting "--stage 11" if you have already
-# run those things.
-local/chain/run_ivector_common.sh --stage $stage \
-	--out-dir "$out_dir" \
-	--test-enable "$test_enable" \
-	--train-set $train_set \
-	--test-sets "$test_sets" \
-	--gmm $gmm \
-	--nnet3-affix "$nnet3_affix" || exit 1;
+
+if [ $stage -le 19 ]; then
+        echo "$0: stage 19 creating chain common";
+	# The iVector-extraction and feature-dumping parts are the same as the standard
+	# nnet3 setup, and you can skip them by setting "--stage 11" if you have already
+	# run those things.
+	local/chain/run_ivector_common.sh --stage $stage \
+		--out-dir "$out_dir" \
+		--test-enable "$test_enable" \
+		--train-set $train_set \
+		--test-sets "$test_sets" \
+		--gmm $gmm \
+		--nnet3-affix "$nnet3_affix" || exit 1;
+fi
+echo "$0: creating chain common complete";
 
 gmm_dir=$out_dir/exp/$gmm
 ali_dir=$out_dir/exp/${gmm}_ali_${train_set}_sp
@@ -104,20 +109,24 @@ for f in $gmm_dir/final.mdl $train_data_dir/feats.scp $train_ivector_dir/ivector
 	[ ! -f $f ] && echo "$0: expected file $f to exist" && exit 1
 done
 
-# Please take this as a reference on how to specify all the options of
-# local/chain/run_chain_common.sh
-local/chain/run_chain_common.sh --stage $stage \
-	--out-dir $out_dir \
-	--gmm-dir $gmm_dir \
-	--ali-dir $ali_dir \
-	--lores-train-data-dir ${lores_train_data_dir} \
-	--lang $lang \
-	--lat-dir $lat_dir \
-	--num-leaves 9000 \
-	--tree-dir $tree_dir || exit 1;
+if [ $stage -le 20 ]; then
+        echo "$0: stage 20 creating chain common";
+	# Please take this as a reference on how to specify all the options of
+	# local/chain/run_chain_common.sh
+	local/chain/run_chain_common.sh --stage $stage \
+		--out-dir $out_dir \
+		--gmm-dir $gmm_dir \
+		--ali-dir $ali_dir \
+		--lores-train-data-dir ${lores_train_data_dir} \
+		--lang $lang \
+		--lat-dir $lat_dir \
+		--num-leaves 9000 \
+		--tree-dir $tree_dir || exit 1;
+fi
+echo "$0: creating chain common complete";
 
-if [ $stage -le 14 ]; then
-	echo "$0: creating neural net configs using the xconfig parser";
+if [ $stage -le 21 ]; then
+	echo "$0: stage 21 creating neural net configs using the xconfig parser";
 	num_targets=$(tree-info $tree_dir/tree | grep num-pdfs | awk '{print $2}')
 	learning_rate_factor=$(echo "print (0.5/$xent_regularize)" | python)
 	cnn_opts="l2-regularize=0.01"
@@ -176,7 +185,11 @@ EOF
 	steps/nnet3/xconfig_to_configs.py --xconfig-file $dir/configs/network.xconfig --config-dir $dir/configs/
 fi
 
-if [ $stage -le 15 ]; then
+echo "$0: creating neural net configs using the xconfig parser complete";
+
+if [ $stage -le 22 ]; then
+	echo "$0: stage 22 start to train chain";
+
 	steps/nnet3/chain/train.py --stage $train_stage \
 		--use-gpu "wait" \
 		--cmd "$decode_cmd" \
@@ -208,8 +221,11 @@ if [ $stage -le 15 ]; then
 		--dir $dir  || exit 1;
 fi
 
+echo "$0: train chain complete";
+
 graph_dir=$dir/graph_tg
-if [ $stage -le 16 ]; then
+if [ $stage -le 23 ]; then
+	echo "$0: stage 23 making graph";
 	# Note: it's not important to give mkgraph.sh the lang directory with the
 	# matched topology (since it gets the topology file from the model).
 	utils/mkgraph.sh --self-loop-scale 1.0 --remove-oov \
@@ -220,8 +236,11 @@ if [ $stage -le 16 ]; then
   	mv $graph_dir/temp.fst $graph_dir/HCLG.fst
 fi
 
-if [ $stage -le 17 ]; then
+echo "$0: making graph complete";
+
+if [ $stage -le 24 ]; then
         if $test_enable; then
+		echo "$0: stage 24 decoding test set";
         	rm $dir/.error 2>/dev/null || true
 		for decode_set in $test_sets; do
 		(
@@ -237,7 +256,10 @@ if [ $stage -le 17 ]; then
 	fi
 fi
 
-if $test_online_decoding && [ $stage -le 18 ]; then
+echo "$0: decoding test set complete";
+
+if $test_online_decoding && [ $stage -le 25 ]; then
+	echo "$0: stage 25 online decoding test set";
 	# note: if the features change (e.g. you add pitch features), you will have to
 	# change the options of the following command line.
 	steps/online/nnet3/prepare_online_decoding.sh \
@@ -266,4 +288,4 @@ if $test_online_decoding && [ $stage -le 18 ]; then
 	fi
 fi
 
-exit 0;
+echo "$0: online decoding test set complete";

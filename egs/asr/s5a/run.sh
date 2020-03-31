@@ -355,19 +355,18 @@ fi
 
 echo "$0: stage 17 collect WER completed"
 
-#Train chain
-if [ $stage -le 18 ]; then
-	# chain modeling script
-	local/chain/run_cnn_tdnn.sh \
-		--test-sets "$test_sets" \
-		--test-enable "$test_enable"
-	if $test_enable; then
-		for c in $test_sets; do
-			for x in $out_dir/exp/chain_cleaned/*/decode_${c}*_tg; do
-				grep WER $x/cer_* | utils/best_wer.sh
-			done
+#Train chain. The following steps are handled in this script.
+# chain modeling script
+local/chain/run_cnn_tdnn.sh \
+	--stage $stage \
+	--test-sets "$test_sets" \
+	--test-enable "$test_enable"
+if $test_enable; then
+	for c in $test_sets; do
+		for x in $out_dir/exp/chain_cleaned/*/decode_${c}*_tg; do
+			grep WER $x/cer_* | utils/best_wer.sh
 		done
-	fi
+	done
 fi
 
-echo "$0: stage 18 train chain completed"
+echo "$0: Training complete"
