@@ -11,19 +11,19 @@ stage=0
 test_sets="aishell aidatatang magicdata thchs"
 corpus_lm=false   # interpolate with corpus lm
 
-openslr_aidatatang=/home/data/xfding/dataset/asr/aidatatang_200zh
+openslr_aidatatang=/home/zlj/Datasets/aidatatang_200zh
 openslr_aishell=/home/data/xfding/dataset/asr/aishell/data_aishell
 openslr_magicdata=/home/data/xfding/dataset/asr/magicdata
 openslr_primewords=/home/data/xfding/dataset/asr/primewords_md_2018_set1
 openslr_stcmds=/home/data/xfding/dataset/asr/ST-CMDS-20170001_1-OS
 openslr_thchs=/home/data/xfding/dataset/asr/thchs30/data_thchs30
 
-vwm_noisy_48h_src=/home/data/xfding/dataset/asr/noisy-48h
-vwm_quite_30h_src=/home/data/xfding/dataset/asr/quite-30h
-vwm_noisy_48h_out=/home/data/xfding/train_dataset/asr/noisy-48h
-vwm_quite_30h_out=/home/data/xfding/train_dataset/asr/quite-30h
+vwm_noisy_48h_src=/home/zlj/dxf/ASR/VWM/asr-noisy-48h
+vwm_quite_30h_src=/home/zlj/dxf/ASR/VWM/asr-quite-30h
+vwm_noisy_48h_out=/home/zlj/dxf/train_dataset/asr/noisy-48h
+vwm_quite_30h_out=/home/zlj/dxf/train_dataset/asr/quite-30h
 
-out_dir=/home/data/xfding/train_result/asr/multi
+out_dir=/home/zlj/dxf/train_result/asr/multi
 
 #test for result
 test_enable=false
@@ -54,7 +54,7 @@ if [ $stage -le 2 ]; then
 	utils/combine_data.sh $out_dir/data/test_combined \
                 $out_dir/data/aidatatang/{dev,test} || exit 1;
 #               $out_dir/data/{aidatatang,aishell,magicdata,thchs}/{dev,test} || exit 1;
-	local/prepare_dict.sh || exit 1;
+	local/prepare_dict.sh --out_dir $out_dir || exit 1;
 fi
 
 echo "$0: stage 2 dictionary generation completed"
@@ -62,7 +62,7 @@ echo "$0: stage 2 dictionary generation completed"
 #LM preparation
 if [ $stage -le 3 ]; then
 	# train LM using transcription
-	local/train_lms.sh || exit 1;
+	local/train_lms.sh --out_dir $out_dir || exit 1;
 fi
 
 echo "$0: stage 3 LM preparation completed"
@@ -358,6 +358,7 @@ echo "$0: stage 17 collect WER completed"
 #Train chain. The following steps are handled in this script.
 # chain modeling script
 local/chain/run_cnn_tdnn.sh \
+    --out_dir $out_dir \
 	--stage $stage \
 	--test-sets "$test_sets" \
 	--test-enable "$test_enable"
