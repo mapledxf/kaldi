@@ -13,9 +13,9 @@
 
 . ./path.sh
 
-[ $# != 0 ] && echo "Usage: $0" && exit 1;
-
 out_dir=/home/data/xfding/train_result/asr/multi
+
+ . utils/parse_options.sh
 
 train_dir=$out_dir/data/train_combined
 dev_dir=$out_dir/data/test_combined

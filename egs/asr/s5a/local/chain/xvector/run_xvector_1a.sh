@@ -15,13 +15,13 @@ stage=1
 train_stage=0
 remove_egs=false
 
-data=$out_dir/data/train_all
-nnet_dir=$out_dir/exp/xvector_nnet_1a
-egs_dir=$out_dir/exp/xvector_nnet_1a/egs
-
 . ./path.sh
 . ./cmd.sh
 . ./utils/parse_options.sh
+
+data=$out_dir/data/train_all
+nnet_dir=$out_dir/exp/xvector_nnet_1a
+egs_dir=$out_dir/exp/xvector_nnet_1a/egs
 
 # Now we create the nnet examples using sid/nnet3/xvector/get_egs.sh.
 # The argument --num-repeats is related to the number of times a speaker
