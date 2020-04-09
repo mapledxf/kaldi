@@ -175,8 +175,9 @@ fi
 
 # Stages 6 through 8 are handled in run_xvector.sh
 local/chain/xvector/run_xvector_1a.sh --stage $stage --train-stage 0 \
-  --data $out_dir/data/train_combined_no_sil --nnet-dir $nnet_dir \
-  --egs-dir $nnet_dir/egs
+    --out_dir $out_dir
+    --data $out_dir/data/train_combined_no_sil --nnet-dir $nnet_dir \
+    --egs-dir $nnet_dir/egs
 
 
 if !($decode); then
