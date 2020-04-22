@@ -5,6 +5,9 @@
 . ./path.sh
 
 out_dir=/home/data/xfding/train_result/asr/multi
+
+. utils/parse_options.sh
+
 text=$out_dir/data/train_combined/text
 lexicon=$out_dir/data/local/dict/lexicon.txt
 
