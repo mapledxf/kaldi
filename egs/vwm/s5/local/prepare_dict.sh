@@ -14,6 +14,8 @@
 . ./path.sh
 
 out_dir=/home/data/xfding/train_result/asr/multi
+cmudict=/data/xfding/pretrained_model/dict/cmudict
+cedict=/data/xfding/pretrained_model/dict/cedict
 
 . utils/parse_options.sh
 
@@ -34,26 +36,26 @@ cat $dict_dir/words.txt | grep -v '[a-zA-Z]' > $dict_dir/lexicon-ch/words-ch.txt
 
 
 ##### produce pronunciations for english
-if [ ! -f $dict_dir/cmudict/cmudict.0.7a ]; then
+if [ ! -f $cmudict/cmudict.0.7a ]; then
   echo "--- Downloading CMU dictionary ..."
   svn co -r 13068 https://svn.code.sf.net/p/cmusphinx/code/trunk/cmudict \
-    $dict_dir/cmudict || exit 1;
+    $cmudict || exit 1;
 fi
 
 # format cmudict
 echo "--- Striping stress and pronunciation variant markers from cmudict ..."
-perl $dict_dir/cmudict/scripts/make_baseform.pl \
-  $dict_dir/cmudict/cmudict.0.7a /dev/stdout |\
-  sed -e 's:^\([^\s(]\+\)([0-9]\+)\(\s\+\)\(.*\):\1\2\3:' > $dict_dir/cmudict/cmudict-plain.txt || exit 1;
+perl $cmudict/scripts/make_baseform.pl \
+  $cmudict/cmudict.0.7a /dev/stdout |\
+  sed -e 's:^\([^\s(]\+\)([0-9]\+)\(\s\+\)\(.*\):\1\2\3:' > $cmudict/cmudict-plain.txt || exit 1;
 
 # extract in-vocab lexicon and oov words
 echo "--- Searching for English OOV words ..."
 awk 'NR==FNR{words[$1]; next;} !($1 in words)' \
-  $dict_dir/cmudict/cmudict-plain.txt $dict_dir/lexicon-en/words-en.txt |\
+  $cmudict/cmudict-plain.txt $dict_dir/lexicon-en/words-en.txt |\
   egrep -v '<.?s>' > $dict_dir/lexicon-en/words-en-oov.txt || exit 1;
 echo "--- oov finished ---"
 awk 'NR==FNR{words[$1]; next;} ($1 in words)' \
-  $dict_dir/lexicon-en/words-en.txt $dict_dir/cmudict/cmudict-plain.txt |\
+  $dict_dir/lexicon-en/words-en.txt $cmudict/cmudict-plain.txt |\
   egrep -v '<.?s>' > $dict_dir/lexicon-en/lexicon-en-iv.txt || exit 1;
 wc -l $dict_dir/lexicon-en/words-en-oov.txt
 wc -l $dict_dir/lexicon-en/lexicon-en-iv.txt
@@ -142,14 +144,14 @@ cat $dict_dir/lexicon-en/lexicon-en-phn.txt | \
 
 
 ##### produce pronunciations for chinese
-if [ ! -f $dict_dir/cedict/cedict_1_0_ts_utf-8_mdbg.txt ]; then
+if [ ! -f $cedict/cedict_1_0_ts_utf-8_mdbg.txt ]; then
   echo "------------- Downloading cedit dictionary ---------------"
-  mkdir -p $dict_dir/cedict
-  wget -P $dict_dir/cedict http://www.mdbg.net/chindict/export/cedict/cedict_1_0_ts_utf-8_mdbg.txt.gz
-  gunzip $dict_dir/cedict/cedict_1_0_ts_utf-8_mdbg.txt.gz
+  mkdir -p $cedict
+  wget -P $cedict http://www.mdbg.net/chindict/export/cedict/cedict_1_0_ts_utf-8_mdbg.txt.gz
+  gunzip $cedict/cedict_1_0_ts_utf-8_mdbg.txt.gz
 fi
 
-cat $dict_dir/cedict/cedict_1_0_ts_utf-8_mdbg.txt | grep -v '#' | awk -F '/' '{print $1}' |\
+cat $cedict/cedict_1_0_ts_utf-8_mdbg.txt | grep -v '#' | awk -F '/' '{print $1}' |\
  perl -e '
   while (<STDIN>) {
     @A = split(" ", $_);
@@ -161,15 +163,15 @@ cat $dict_dir/cedict/cedict_1_0_ts_utf-8_mdbg.txt | grep -v '#' | awk -F '/' '{p
     }
     print "\n";
   }
- ' | sort -k1 > $dict_dir/cedict/ch-dict.txt || exit 1;
+ ' | sort -k1 > $cedict/ch-dict.txt || exit 1;
 
 echo "--- Searching for Chinese OOV words ..."
 awk 'NR==FNR{words[$1]; next;} !($1 in words)' \
-  $dict_dir/cedict/ch-dict.txt $dict_dir/lexicon-ch/words-ch.txt |\
+  $cedict/ch-dict.txt $dict_dir/lexicon-ch/words-ch.txt |\
   egrep -v '<.?s>' > $dict_dir/lexicon-ch/words-ch-oov.txt || exit 1;
 
 awk 'NR==FNR{words[$1]; next;} ($1 in words)' \
-  $dict_dir/lexicon-ch/words-ch.txt $dict_dir/cedict/ch-dict.txt |\
+  $dict_dir/lexicon-ch/words-ch.txt $cedict/ch-dict.txt |\
   egrep -v '<.?s>' > $dict_dir/lexicon-ch/lexicon-ch-iv.txt || exit 1;
 
 wc -l $dict_dir/lexicon-ch/words-ch-oov.txt
@@ -178,7 +180,7 @@ wc -l $dict_dir/lexicon-ch/lexicon-ch-iv.txt
 
 # validate Chinese dictionary and compose a char-based
 # dictionary in order to get OOV pronunciations
-cat $dict_dir/cedict/ch-dict.txt |\
+cat $cedict/ch-dict.txt |\
   perl -e '
   use utf8;
   binmode(STDIN,":encoding(utf8)");
@@ -189,10 +191,10 @@ cat $dict_dir/cedict/ch-dict.txt |\
     $proun_len = @A - 1 ;
     if ($word_len == $proun_len) {print $_;}
   }
-  ' > $dict_dir/cedict/ch-dict-1.txt || exit 1;
+  ' > $cedict/ch-dict-1.txt || exit 1;
 
 # extract chars
-cat $dict_dir/cedict/ch-dict-1.txt | awk '{print $1}' |\
+cat $cedict/ch-dict-1.txt | awk '{print $1}' |\
   perl -e '
   use utf8;
   binmode(STDIN,":encoding(utf8)");
@@ -207,7 +209,7 @@ cat $dict_dir/cedict/ch-dict-1.txt | awk '{print $1}' |\
   ' | grep -v '^$' > $dict_dir/lexicon-ch/ch-char.txt || exit 1;
 
 # extract individual pinyins
-cat $dict_dir/cedict/ch-dict-1.txt |\
+cat $cedict/ch-dict-1.txt |\
   awk '{for(i=2; i<=NF; i++) print $i}' |\
   perl -ape 's/ /\n/g;' > $dict_dir/lexicon-ch/ch-char-pinyin.txt || exit 1;
 

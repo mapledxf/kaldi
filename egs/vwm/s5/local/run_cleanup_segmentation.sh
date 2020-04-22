@@ -25,9 +25,7 @@ out_dir=/home/data/xfding/train_result/asr/multi
 test_enable=false
 stage=0
 cleanup_stage=0
-data=$out_dir/data/train_all
 cleanup_affix=cleaned
-srcdir=$out_dir/exp/tri4a
 nj=5
 decode_nj=10
 decode_num_threads=4
@@ -37,6 +35,8 @@ corpus_lm=false
 . ./path.sh
 . ./cmd.sh
 . ./utils/parse_options.sh
+data=$out_dir/data/train_all
+srcdir=$out_dir/exp/tri4a
 
 cleaned_data=${data}_${cleanup_affix}
 
