@@ -14,6 +14,8 @@ nj=64
 
 out_dir=/data/xfding/train_result/asr/vwm
 data_dir=/data/xfding/data_prep/asr
+cmudict=/data/xfding/pretrained_model/dict/cmudict
+cedict=/data/xfding/pretrained_model/dict/cedict
 
 #test for result
 test_enable=false
@@ -37,7 +39,7 @@ if [ $stage -le 2 ]; then
                 $data_dir/{aidatatang,aishell,cmlr,csmsc,vwm_noisy_48h,vwm_quite_30h,thchs,magicdata,primewords,stcmds}_${fs}/{train,dev} || exit 1;
 	utils/combine_data.sh $out_dir/data/test_combined \
                 $data_dir/{aishell,aidatatang,magicdata,thchs}_${fs}/test || exit 1;
-	local/prepare_dict.sh --out-dir $out_dir || exit 1;
+	local/prepare_dict.sh --out-dir $out_dir --cmudict $cmudict --cedict $cedict || exit 1;
 fi
 
 echo "$0: stage 2 dictionary generation completed"
@@ -312,7 +314,7 @@ if [ $stage -le 16 ]; then
 		--nj $nj \
 		--test-sets "$test_sets" \
 		--test-enable "$test_enable" \
-		--out-dir "$out_dir" || exit 1;
+		--out-dir $out_dir || exit 1;
 fi
 
 echo "$0: stage 16 clean up completed"
@@ -337,6 +339,7 @@ echo "$0: stage 17 collect WER completed"
 # chain modeling script
 local/chain/run_cnn_tdnn.sh \
 	--stage $stage \
+	--out-dir $out_dir \
 	--test-sets "$test_sets" \
 	--test-enable "$test_enable"
 if $test_enable; then
