@@ -18,3 +18,12 @@ This recipe was developed by Xingyu Na (Microsoft Corporation) and Hui Bu (AISHE
 6. Data preparation scripts are copied from existing recipes, so it is straightforward for any user to **expand the corpora**.
 
 CUDA_VISIBLE_DEVICES=1 nohup ./run.sh --stage 0 > train.log 2>&1 &
+oputput dir: /data/xfding/train_result/asr/vwm/exp/chain_cleaned/tdnn_cnn_1a_sp_online
+
+vosk: 
+./local/lookahead/run_lookahead.sh
+mkdir am
+mv final.mdl am/
+mv graph_lookahead or graph_lookahead_arpa to graph
+mv ivector_extractor/ to ivector
+cp conf/splice.conf ivector
