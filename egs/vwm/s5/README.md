@@ -27,3 +27,14 @@ mv final.mdl am/
 mv graph_lookahead or graph_lookahead_arpa to graph
 mv ivector_extractor/ to ivector
 cp conf/splice.conf ivector
+create conf/model.conf:
+--min-active=200
+--max-active=3000
+--beam=10.0
+--lattice-beam=2.0
+--acoustic-scale=1.0
+--frame-subsampling-factor=3
+--endpoint.silence-phones=1:2:3:4:5:6:7:8:9:10
+--endpoint.rule2.min-trailing-silence=0.5
+--endpoint.rule3.min-trailing-silence=1.0
+--endpoint.rule4.min-trailing-silence=2.0
