@@ -21,7 +21,7 @@ set -e
 set -o pipefail
 set -u
 
-out_dir=/home/data/xfding/train_result/asr/multi
+out_dir=
 test_enable=false
 stage=0
 cleanup_stage=0
@@ -30,13 +30,12 @@ nj=5
 decode_nj=10
 decode_num_threads=4
 test_sets=""
-corpus_lm=false
+data=
+srcdir=
 
 . ./path.sh
 . ./cmd.sh
 . ./utils/parse_options.sh
-data=$out_dir/data/train_all
-srcdir=$out_dir/exp/tri4a
 
 cleaned_data=${data}_${cleanup_affix}
 
@@ -56,13 +55,13 @@ fi
 
 if [ $stage -le 3 ]; then
 	steps/train_sat.sh --cmd "$train_cmd" \
-		12000 190000 $cleaned_data $out_dir/data/lang ${srcdir}_ali_${cleanup_affix} ${cleaned_dir} || exit 1;
+		7000 150000 $cleaned_data $out_dir/data/lang ${srcdir}_ali_${cleanup_affix} ${cleaned_dir} || exit 1;
 fi
 
 if [ $stage -le 4 ]; then
 	# Test with the models trained on cleaned-up data.
 	utils/mkgraph.sh $out_dir/data/lang_combined_tg ${cleaned_dir} ${cleaned_dir}/graph_tg || exit 1;
-	if $test_enable; then
+        if $test_enable; then
 		for c in $test_sets; do
 		(
 			steps/decode_fmllr.sh --nj $decode_nj --num-threads $decode_num_threads \

@@ -3,9 +3,9 @@
 . ./path.sh
 
 # Example script for lookahead composition
-out_dir=/data/xfding/train_result/asr/vwm
+out_dir=/data/xfding/train_result/asr/ali
 lm=${out_dir}/data/local/lm/3gram-mincount/lm_unpruned.gz
-am=${out_dir}/exp/chain_cleaned/tdnn_cnn_1a_sp_online
+am=${out_dir}/exp/chain_cleaned/tdnn1j_sp
 
 if [ ! -f "${KALDI_ROOT}/tools/openfst/lib/libfstlookahead.so" ]; then
     echo "Missing ${KALDI_ROOT}/tools/openfst/lib/libfstlookahead.so"
@@ -21,7 +21,7 @@ export LD_LIBRARY_PATH=${KALDI_ROOT}/tools/openfst/lib/fst
 
 # Baseline
 echo "Start baseline"
-utils/format_lm.sh ${out_dir}/data/lang_chain ${lm} \
+utils/format_lm.sh ${out_dir}/data/lang ${lm} \
     ${out_dir}/data/local/dict/lexicon.txt ${out_dir}/data/lang_test_arpa_base
 
 echo "Start lookahead"

@@ -1,4 +1,5 @@
-This is a Chinese speech recognition recipe that trains on all Chinese corpora on [OpenSLR](http://www.openslr.org), including:
+# VWM ASR Model
+## Datasets used
 * Aidatatang (140 hours)
 * Aishell (151 hours)
 * MagicData (712 hours)
@@ -6,27 +7,66 @@ This is a Chinese speech recognition recipe that trains on all Chinese corpora o
 * ST-CMDS (110 hours)
 * THCHS-30 (26 hours)
 
-This recipe was developed by Xingyu Na (Microsoft Corporation) and Hui Bu (AISHELL Foundation).
 
-## Highlights
-
-1. This recipe start from bootstraping small GMM models using small portion of data to speaker adaptive training using cleaned full partition, which is over 1k hours.
-2. A general lexicon is prepared by combining CMU English dictionary and CC-CEDIT Chinese dictionary, then **expanded using G2P**.
-3. A general language model is trained using all training transcriptions, while **corpus specific LMs** are optionally obtained by interpolated with the general LM.
-4. Features are extracted in an online fashion.
-5. A Chain model ready for **online ASR** is trained, prepared and evaluated.
-6. Data preparation scripts are copied from existing recipes, so it is straightforward for any user to **expand the corpora**.
-
+## Train Commands
+```
 CUDA_VISIBLE_DEVICES=1 nohup ./run.sh --stage 0 > train.log 2>&1 &
-oputput dir: /data/xfding/train_result/asr/vwm/exp/chain_cleaned/tdnn_cnn_1a_sp_online
+```
 
-vosk: 
+oputput dir: 
+```
+/data/xfding/train_result/asr/ali/exp/tri7b_DFSMN_S_denlats
+/data/xfding/train_result/asr/ali/exp/tri7b_DFSMN_S_smbr
+```
+
+## Vosk
+### File structure
+There are two formats to use vosk:
+1.
+```
+|____mfcc.conf
+|____HCLG.fst
+|____final.mdl
+|____README
+|____ivector
+| |____global_cmvn.stats
+| |____splice.conf
+| |____final.mat
+| |____online_cmvn.conf
+| |____final.ie
+| |____final.dubm
+|____phones.txt
+|____word_boundary.int
+|____words.txt
+```
+2.
+```
+____mfcc.conf
+|____.DS_Store
+|____HCLr.fst
+|____disambig_tid.int
+|____final.mdl
+|____README
+|____ivector
+| |____global_cmvn.stats
+| |____splice.conf
+| |____final.mat
+| |____online_cmvn.conf
+| |____final.ie
+| |____final.dubm
+|____word_boundary.int
+|____Gr.fst
+```
+
+### Create files
+
 ./local/lookahead/run_lookahead.sh
 mkdir am
 mv final.mdl am/
 mv graph_lookahead or graph_lookahead_arpa to graph
 mv ivector_extractor/ to ivector
 cp conf/splice.conf ivector
+cp mfcc.conf
 create conf/model.conf:
 --min-active=200
 --max-active=3000

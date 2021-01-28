@@ -4,11 +4,11 @@
 # To be run from one directory above this script.
 . ./path.sh
 
-out_dir=/home/data/xfding/train_result/asr/multi
+out_dir=""
 . utils/parse_options.sh
 
-text=$out_dir/data/train_combined/text
-lexicon=$out_dir/data/local/dict/lexicon.txt
+text=$out_dir/data/train_all/text
+lexicon=$out_dir/data/local/dict_nosp/lexicon.txt
 
 for f in "$text" "$lexicon"; do
   [ ! -f $x ] && echo "$0: No such file $f" && exit 1;
@@ -17,8 +17,6 @@ done
 # This script takes no arguments.  It assumes you have already run
 # *_data_prep.sh and combine the data folders
 # It takes as input the files
-# data/train_combined/text
-# data/local/dict/lexicon.txt
 dir=$out_dir/data/local/lm
 mkdir -p $dir
 

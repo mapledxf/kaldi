@@ -13,15 +13,15 @@
 
 . ./path.sh
 
-out_dir=/home/data/xfding/train_result/asr/multi
-cmudict=/data/xfding/pretrained_model/dict/cmudict
-cedict=/data/xfding/pretrained_model/dict/cedict
+out_dir=""
+cmudict=""
+cedict=""
 
 . utils/parse_options.sh
 
-train_dir=$out_dir/data/train_combined
-dev_dir=$out_dir/data/test_combined
-dict_dir=$out_dir/data/local/dict
+train_dir=$out_dir/data/train_all
+dev_dir=$out_dir/data/test_all
+dict_dir=$out_dir/data/local/dict_nosp
 mkdir -p $dict_dir
 mkdir -p $dict_dir/lexicon-{en,ch}
 
