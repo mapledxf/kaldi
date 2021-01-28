@@ -19,7 +19,7 @@ BINFILES = nnet-train-frmshuff \
         nnet-forward nnet-copy nnet-info nnet-concat \
         transf-to-nnet cmvn-to-nnet nnet-initialize \
 	feat-to-post paste-post train-transitions \
-	nnet-set-learnrate
+	nnet-set-learnrate nnet-train-fsmn-streams
 
 OBJFILES =
 

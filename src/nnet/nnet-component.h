@@ -81,7 +81,13 @@ class Component {
     kMaxPoolingComponent,
     kFramePoolingComponent,
     kParallelComponent,
-    kMultiBasisComponent
+    kMultiBasisComponent,
+
+    //FSMN
+    kFsmn,
+    kDeepFsmn,
+    kUniFsmn,
+    kUniDeepFsmn,
   } ComponentType;
 
   /// A pair of type and marker,

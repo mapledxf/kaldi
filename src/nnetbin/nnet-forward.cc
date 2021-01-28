@@ -140,6 +140,11 @@ int main(int argc, char *argv[]) {
 
       // push it to gpu,
       feats = mat;
+      ///only for nnet with fsmn component
+      Vector<BaseFloat> flags;
+      flags.Resize(feats_transf.NumRows(), kSetZero);
+      flags.Set(1.0);
+      nnet.SetFlags(flags);
 
       // fwd-pass, feature transform,
       nnet_transf.Feedforward(feats, &feats_transf);
