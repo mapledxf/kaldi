@@ -15,9 +15,16 @@ CUDA_VISIBLE_DEVICES=0,1 nohup ./run.sh --stage 0 > train.log 2>&1 &
 
 oputput dir: 
 ```
-/data/xfding/train_result/asr/ali/exp/tri7b_DFSMN_S_denlats
-/data/xfding/train_result/asr/ali/exp/tri7b_DFSMN_S_smbr
+/data/xfding/train_result/asr/vwm/exp/chain_cleaned/tdnn1j_sp
+/data/xfding/train_result/asr/vwm/exp/chain_cleaned/tdnn1j_sp_online
+/data/xfding/train_result/asr/vwm/exp/nnet3_cleaned/extractor
 ```
+
+## Train Options
+./local/nnet/run_ivector_common.sh 
+	--ivector-dim 30 # use 100 to improve accuracy
+./local/chain/tuning/run_tdnn_1j.sh
+	input dim=30 name=ivector # use 100 to improve accuracy
 
 ## Vosk
 ### File structure
