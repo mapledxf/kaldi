@@ -127,10 +127,6 @@ if [ $stage -le 12 ]; then
   # speed-perturbed data (local/nnet3/run_ivector_common.sh made them), so use
   # those.  The num-leaves is always somewhat less than the num-leaves from
   # the GMM baseline.
-   if [ -f $tree_dir/final.mdl ]; then
-     echo "$0: $tree_dir/final.mdl already exists, refusing to overwrite it."
-     exit 1;
-  fi
   steps/nnet3/chain/build_tree.sh \
     --frame-subsampling-factor 3 \
     --context-opts "--context-width=2 --central-position=1" \
@@ -154,7 +150,7 @@ if [ $stage -le 13 ]; then
 
   mkdir -p $dir/configs
   cat <<EOF > $dir/configs/network.xconfig
-  input dim=100 name=ivector
+  input dim=30 name=ivector
   input dim=40 name=input
 
   # this takes the MFCCs and generates filterbank coefficients.  The MFCCs
@@ -210,8 +206,8 @@ if [ $stage -le 14 ]; then
     --trainer.max-param-change=2.0 \
     --trainer.num-epochs=2 \
     --trainer.frames-per-iter=3000000 \
-    --trainer.optimization.num-jobs-initial=2 \
-    --trainer.optimization.num-jobs-final=5 \
+    --trainer.optimization.num-jobs-initial=1 \
+    --trainer.optimization.num-jobs-final=1 \
     --trainer.optimization.initial-effective-lrate=0.002 \
     --trainer.optimization.final-effective-lrate=0.0002 \
     --trainer.num-chunk-per-minibatch=128,64 \
@@ -225,6 +221,18 @@ if [ $stage -le 14 ]; then
     --tree-dir=$tree_dir \
     --lat-dir=$lat_dir \
     --dir=$dir  || exit 1;
+fi
+
+graph_dir=$dir/graph
+if [ $stage -le 15 ]; then
+	# Note: it's not important to give mkgraph.sh the lang directory with the
+	# matched topology (since it gets the topology file from the model).
+	utils/mkgraph.sh --self-loop-scale 1.0 --remove-oov \
+		$out_dir/data/lang_combined_tg $dir $graph_dir || exit 1;
+	# remove <UNK> (word id is 3) from the graph, and convert back to const-FST.
+	fstrmsymbols --apply-to-output=true --remove-arcs=true "echo 3|" $graph_dir/HCLG.fst - | \
+		fstconvert --fst_type=const > $graph_dir/temp.fst
+	mv $graph_dir/temp.fst $graph_dir/HCLG.fst
 fi
 
 # if [ $stage -le 16 ]; then
@@ -253,12 +261,12 @@ fi
 # # TDNN systems it would give exactly the same results as the
 # # normal decoding.
 
-# if $test_online_decoding && [ $stage -le 17 ]; then
-#   # note: if the features change (e.g. you add pitch features), you will have to
-#   # change the options of the following command line.
-#   steps/online/nnet3/prepare_online_decoding.sh \
-#     --mfcc-config conf/mfcc_hires.conf \
-#     $lang exp/nnet3${nnet3_affix}/extractor ${dir} ${dir}_online
+if $test_online_decoding && [ $stage -le 17 ]; then
+  # note: if the features change (e.g. you add pitch features), you will have to
+  # change the options of the following command line.
+  steps/online/nnet3/prepare_online_decoding.sh \
+    --mfcc-config conf/mfcc_hires.conf \
+    $lang $out_dir/exp/nnet3${nnet3_affix}/extractor ${dir} ${dir}_online
 
 #   rm $dir/.error 2>/dev/null || true
 
@@ -278,7 +286,7 @@ fi
 #   done
 #   wait
 #   [ -f $dir/.error ] && echo "$0: there was a problem while decoding" && exit 1
-# fi
+fi
 
 
 exit 0;

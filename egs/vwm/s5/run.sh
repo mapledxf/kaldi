@@ -436,7 +436,7 @@ fi
 echo -e "$0: stage 22 ivector extraced\n"
 
 ## Traing FSMN models on the cleaned-up data
-if [ $stage -le 23 ]; then
+# if [ $stage -le 23 ]; then
 ## Three configurations of DFSMN with different model size (S--small; M--medium; L--large)
 ## with/without online ivector
 
@@ -453,7 +453,7 @@ if [ $stage -le 23 ]; then
 # local/nnet/run_fsmn_ivector.sh DFSMN_S_ivector
 # local/nnet/run_fsmn_ivector.sh DFSMN_M_ivector
 # local/nnet/run_fsmn_ivector.sh DFSMN_L_ivector
-fi
+# fi
 echo -e "$0: stage 23 train fsmn done\n"
 
 
@@ -461,8 +461,7 @@ if [ $stage -le 24 ]; then
 	#Train chain. The following steps are handled in this script.
 	# chain modeling script
 	local/chain/tuning/run_tdnn_1j.sh \
-		--stage 14 \
-		--train-stage 113 \
+		--stage 0 \
 	 	--out-dir $out_dir \
 	 	--test-sets "$test_sets" \
 		--train_set train_full_cleaned \
@@ -476,5 +475,12 @@ if [ $stage -le 24 ]; then
 	fi
 fi
 echo -e "$0: stage 24 train tdnn done\n"
+
+#if [ $stage -le 25 ]; then
+#	./local/lookahead/run_lookahead.sh \
+#		--out-dir $out_dir \
+#		--lm ${out_dir}/data/local/lm/3gram-mincount/lm_unpruned.gz \
+#		--am ${out_dir}/exp/chain_cleaned/tdnn1j_sp
+#fi
 
 echo -e "$0: Training complete\n"

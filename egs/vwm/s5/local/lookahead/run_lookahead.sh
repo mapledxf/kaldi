@@ -1,11 +1,13 @@
 #!/bin/bash
 
-. ./path.sh
-
 # Example script for lookahead composition
-out_dir=/data/xfding/train_result/asr/ali
-lm=${out_dir}/data/local/lm/3gram-mincount/lm_unpruned.gz
-am=${out_dir}/exp/chain_cleaned/tdnn1j_sp
+out_dir=
+lm=
+am=
+
+. ./path.sh
+. ./cmd.sh
+. ./utils/parse_options.sh
 
 if [ ! -f "${KALDI_ROOT}/tools/openfst/lib/libfstlookahead.so" ]; then
     echo "Missing ${KALDI_ROOT}/tools/openfst/lib/libfstlookahead.so"

@@ -10,7 +10,7 @@
 
 ## Train Commands
 ```
-CUDA_VISIBLE_DEVICES=1 nohup ./run.sh --stage 0 > train.log 2>&1 &
+CUDA_VISIBLE_DEVICES=0,1 nohup ./run.sh --stage 0 > train.log 2>&1 &
 ```
 
 oputput dir: 
